@@ -5,6 +5,7 @@ import { Check, LockKeyhole, LockKeyholeOpen } from "lucide-react"
 import { redeemShare } from "@/app/share/[token]/actions"
 import type { GuestRedeemResult } from "@/app/share/[token]/actions"
 import { Button } from "@/components/ui/button"
+import { isGuestUnlockDisabled } from "@/lib/shares/guest-ui-state"
 
 const RELOCK_SECONDS = 30
 
@@ -53,7 +54,7 @@ export function GuestUnlock({ token }: { token: string }) {
   }
 
   const isCoolingDown = unlocked && secondsRemaining > 0
-  const disabled = isPending || isCoolingDown || (unlocked && !canUnlockAgain)
+  const disabled = isGuestUnlockDisabled({ isPending, isCoolingDown, canUnlockAgain })
 
   return (
     <div className="space-y-4">
@@ -93,10 +94,10 @@ export function GuestUnlock({ token }: { token: string }) {
             <LockKeyholeOpen aria-hidden="true" className="size-5" />
             Unlocked
           </>
-        ) : unlocked && !canUnlockAgain ? (
+        ) : !canUnlockAgain ? (
           <>
             <LockKeyhole aria-hidden="true" className="size-5" />
-            No unlocks remaining
+            {unlocked ? "No unlocks remaining" : "Link unavailable"}
           </>
         ) : (
           <>
