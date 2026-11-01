@@ -85,7 +85,7 @@ Expected: FAIL because the share modules do not exist.
 
 Create `app/actions/shares.ts` with `createShare(lockerId, formData)` and `revokeShare(grantId)` actions. `createShare` returns `{ url: `${getEnv().APP_URL}/share/${token}`, grantId }`.
 
-Create `app/dashboard/lockers/[id]/page.tsx`: load the locker and active grants for the user, 404 when the locker is not theirs, show state and a `ShareDialog`.
+Create `app/dashboard/lockers/[id]/page.tsx`: load the locker and active grants for the user, 404 when the locker is not theirs, show state and a `ShareDialog`. In Next 16 `params` is a Promise; await it before querying.
 
 Create `components/share-dialog.tsx` as a client component with duration (15, 60, 240, 1440 minutes), guest label, max uses, a submit button, and a read-only input with `data-testid="share-url"` plus a copy button.
 

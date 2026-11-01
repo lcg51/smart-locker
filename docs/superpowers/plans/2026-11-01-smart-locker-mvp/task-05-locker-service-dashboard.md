@@ -118,7 +118,7 @@ Create `app/dashboard/layout.tsx`: `const user = await requireUser()`, render `<
 
 Create `app/dashboard/page.tsx`: load `getLockersForUser(user.id)`, show "Your lockers", an empty state when there are none, and a grid of `<LockerCard locker={locker} />`.
 
-Create `app/api/lockers/[id]/state/route.ts` with a `GET` handler: `requireUser()`, call `refreshLockerState`, and return `{ status, batteryLevel, online }` or 404. This is the polling path the dashboard uses; signed vendor webhooks are post-MVP.
+Create `app/api/lockers/[id]/state/route.ts` with a `GET` handler: `requireUser()`, call `refreshLockerState`, and return `{ status, batteryLevel, online }` or 404. This is the polling path the dashboard uses; signed vendor webhooks are post-MVP. In Next 16 the route context `params` is a Promise: type it as `{ params }: { params: Promise<{ id: string }> }` and use `const { id } = await params`.
 
 Create `components/locker-card.tsx` as a client component. Show name, status badge, battery, an Unlock/Lock button that calls the server action inside `useTransition`, an inline error with a retry affordance, and a link to `/dashboard/lockers/[id]`. Call `router.refresh()` after a successful action. Poll `GET /api/lockers/[id]/state` every 30 seconds and update the displayed status and battery; stop polling on unmount.
 

@@ -37,10 +37,12 @@ Add to `package.json`:
 "provision": "tsx scripts/provision.ts"
 ```
 
-Append to `.gitignore`:
+Update `.gitignore` so real env files stay ignored but the templates are tracked. The repo currently has a bare `.env*` line; replace it with:
 
 ```
-.env.test
+.env*
+!.env.example
+!.env.test.example
 ```
 
 - [ ] **Step 3: Add the local database and env templates**
@@ -78,7 +80,7 @@ DATABASE_URL=postgresql://smart:smart@localhost:5432/smart_locker
 AUTH_SECRET=replace-with-32-or-more-characters
 AUTH_URL=http://localhost:3000
 APP_URL=http://localhost:3000
-EMAIL_FROM=Smart Locker <no-reply@example.com>
+EMAIL_FROM=no-reply@example.com
 RESEND_API_KEY=re_replace_me
 LOCK_PROVIDER=mock
 E2E=1

@@ -100,7 +100,7 @@ Add `setGuestUnlockEmails(userId, enabled)` to `app/actions/account.ts` as a `"u
 
 - [ ] **Step 5: Add the activity page**
 
-Create `app/dashboard/activity/page.tsx`: `requireUser()`, read `lockerId` from search params, call `listLockEvents`, and render a table of time, locker name, actor, action, and success. Add a locker filter and a "Load more" link using the cursor. Empty state: "No activity yet."
+Create `app/dashboard/activity/page.tsx`: `requireUser()`, read `lockerId` from search params (a Promise in Next 16: `const { lockerId } = await searchParams`), call `listLockEvents`, and render a table of time, locker name, actor, action, and success. Add a locker filter and a "Load more" link using the cursor. Empty state: "No activity yet."
 
 - [ ] **Step 6: Run the tests to verify they pass**
 
