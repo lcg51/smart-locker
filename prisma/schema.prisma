@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  name              String?
+  email             String?   @unique
+  emailVerified     DateTime?
+  image             String?
+  vendorGatewayId   String?
+  gatewayLastSeenAt DateTime?
+  guestUnlockEmails Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  deletedAt         DateTime?
+  accounts          Account[]
+  sessions          Session[]
+  lockers           Locker[]
+  shareGrants       ShareGrant[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model AllowedEmail {
+  email      String    @id
+  invitedBy  String?
+  createdAt  DateTime  @default(now())
+  acceptedAt DateTime?
+}
+
+model Locker {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  vendor       String
+  vendorLockId String
+  status       LockStatus  @default(UNKNOWN)
+  batteryLevel Int?
+  lastSyncedAt DateTime?
+  confirmedAt  DateTime?
+  createdAt    DateTime    @default(now())
+  deletedAt    DateTime?
+  shareGrants  ShareGrant[]
+  events       LockEvent[]
+
+  @@unique([vendor, vendorLockId])
+  @@index([userId])
+}
+
+enum LockStatus {
+  LOCKED
+  UNLOCKED
+  UNKNOWN
+}
+
+model ShareGrant {
+  id              String     @id @default(cuid())
+  lockerId        String
+  locker          Locker     @relation(fields: [lockerId], references: [id], onDelete: Cascade)
+  createdByUserId String
+  createdBy       User       @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+  tokenHash       String     @unique
+  guestLabel      String?
+  expiresAt       DateTime
+  maxUses         Int
+  usedCount       Int        @default(0)
+  revokedAt       DateTime?
+  createdAt       DateTime   @default(now())
+  events          LockEvent[]
+
+  @@index([lockerId])
+}
+
+model LockEvent {
+  id        String      @id @default(cuid())
+  lockerId  String
+  locker    Locker      @relation(fields: [lockerId], references: [id], onDelete: Cascade)
+  grantId   String?
+  grant     ShareGrant? @relation(fields: [grantId], references: [id], onDelete: SetNull)
+  actorType ActorType
+  action    LockAction
+  success   Boolean
+  errorCode String?
+  ipHash    String?
+  createdAt DateTime    @default(now())
+
+  @@index([lockerId, createdAt])
+}
+
+enum ActorType {
+  OWNER
+  GUEST
+  SYSTEM
+}
+
+enum LockAction {
+  UNLOCK
+  LOCK
+}
+
+model VendorCredential {
+  id              String   @id @default(cuid())
+  vendor          String   @unique
+  encryptedTokens String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
