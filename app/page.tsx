@@ -1,14 +1,7 @@
-"use client"
+import { auth } from "@/auth"
+import { redirect } from "next/navigation"
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-
-export default function Home() {
-  const router = useRouter()
-
-  useEffect(() => {
-    router.replace("/auth")
-  }, [router])
-
-  return null
+export default async function Home() {
+  const session = await auth()
+  redirect(session?.user ? "/dashboard" : "/auth")
 }

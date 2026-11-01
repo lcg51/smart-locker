@@ -1,81 +1,48 @@
-"use client"
-
-import { useState, useEffect, useRef } from "react"
-import { useRouter } from "next/navigation"
-import { PinPad } from "@/components/pin-pad"
-import { storage } from "@/lib/storage"
-import { Lock } from "lucide-react"
+import { LockKeyhole } from "lucide-react"
+import { requestMagicLink } from "@/app/auth/actions"
 
 export default function AuthPage() {
-  const router = useRouter()
-  const [error, setError] = useState(false)
-  const [isShaking, setIsShaking] = useState(false)
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
-  const hasRedirected = useRef(false)
-
-  useEffect(() => {
-    if (hasRedirected.current) return
-
-    console.log("[v0] Auth page - checking if already authenticated...")
-    const isAuth = storage.isAuthenticated()
-    console.log("[v0] Auth status:", isAuth)
-
-    if (isAuth) {
-      console.log("[v0] Already authenticated, redirecting to dashboard...")
-      hasRedirected.current = true
-      router.replace("/dashboard")
-    } else {
-      console.log("[v0] Not authenticated, showing PIN pad...")
-      setIsCheckingAuth(false)
-    }
-  }, [router])
-
-  const handlePinComplete = (enteredPin: string) => {
-    if (hasRedirected.current) return
-
-    console.log("[v0] PIN entered, validating...")
-    const settings = storage.getSettings()
-
-    if (enteredPin === settings.pin) {
-      console.log("[v0] PIN correct, setting authenticated and redirecting...")
-      storage.setAuthenticated(true)
-      hasRedirected.current = true
-      router.replace("/dashboard")
-    } else {
-      console.log("[v0] PIN incorrect")
-      setError(true)
-      setIsShaking(true)
-      setTimeout(() => {
-        setError(false)
-        setIsShaking(false)
-      }, 600)
-    }
-  }
-
-  if (isCheckingAuth) {
-    return null
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 mb-4">
-            <Lock className="h-10 w-10 text-primary" />
+    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
+      <section aria-labelledby="sign-in-title" className="w-full max-w-md rounded-2xl border bg-card p-8 shadow-sm sm:p-10">
+        <div className="mb-8 text-center">
+          <div className="mb-5 inline-flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <LockKeyhole aria-hidden="true" className="size-7" />
           </div>
-          <h1 className="text-3xl font-bold mb-2 text-balance">Smart Locker</h1>
-          <p className="text-muted-foreground">Enter your PIN to access your lockers</p>
+          <h1 id="sign-in-title" className="text-3xl font-semibold tracking-tight">
+            Smart Locker
+          </h1>
+          <p className="mt-2 text-muted-foreground">Sign in to manage your apartment lockers.</p>
         </div>
 
-        <div className={`bg-card rounded-2xl p-8 shadow-lg ${isShaking ? "animate-shake" : ""}`}>
-          <PinPad onComplete={handlePinComplete} />
-          {error && (
-            <p className="text-destructive text-center mt-6 text-sm font-medium">Incorrect PIN. Please try again.</p>
-          )}
-        </div>
+        <form action={requestMagicLink} className="space-y-5">
+          <div className="space-y-2">
+            <label className="text-sm font-medium" htmlFor="email">
+              Invited email address
+            </label>
+            <input
+              autoComplete="email"
+              className="flex min-h-12 w-full rounded-md border bg-background px-3 py-2 text-base outline-none transition-shadow placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              id="email"
+              name="email"
+              placeholder="you@example.com"
+              required
+              type="email"
+            />
+            <p className="text-sm text-muted-foreground">We’ll email you a secure sign-in link.</p>
+          </div>
+          <button
+            className="inline-flex min-h-12 w-full items-center justify-center rounded-md bg-primary px-4 font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            type="submit"
+          >
+            Send sign-in link
+          </button>
+        </form>
 
-        <p className="text-center text-xs text-muted-foreground mt-6">Default PIN: 1234</p>
-      </div>
-    </div>
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          Access is available to residents invited to this pilot.
+        </p>
+      </section>
+    </main>
   )
 }
