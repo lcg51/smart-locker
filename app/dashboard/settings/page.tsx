@@ -1,9 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { storage } from "@/lib/storage"
-import { Header } from "@/components/header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -29,17 +28,6 @@ export default function SettingsPage() {
   const [newPin, setNewPin] = useState("")
   const [confirmPin, setConfirmPin] = useState("")
   const [isChangingPin, setIsChangingPin] = useState(false)
-
-  useEffect(() => {
-    if (!storage.isAuthenticated()) {
-      router.push("/auth")
-    }
-  }, [router])
-
-  const handleLogout = () => {
-    storage.setAuthenticated(false)
-    router.push("/auth")
-  }
 
   const handleChangePIN = () => {
     const settings = storage.getSettings()
@@ -99,8 +87,6 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header onLogout={handleLogout} />
-
       <main className="container mx-auto px-4 py-8 max-w-2xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Settings</h1>

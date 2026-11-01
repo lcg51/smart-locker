@@ -1,9 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import { storage } from "@/lib/storage"
-import { Header } from "@/components/header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -13,20 +11,14 @@ import type { AccessLog } from "@/types/locker"
 import { Lock, LockOpen, Clock, CheckCircle, XCircle, Bell, BellOff } from "lucide-react"
 
 export default function NotificationsPage() {
-  const router = useRouter()
   const [logs, setLogs] = useState<AccessLog[]>([])
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>("default")
 
   useEffect(() => {
-    if (!storage.isAuthenticated()) {
-      router.push("/auth")
-      return
-    }
-
     loadLogs()
     checkNotificationPermission()
-  }, [router])
+  }, [])
 
   const loadLogs = () => {
     const accessLogs = storage.getAccessLogs()
@@ -39,11 +31,6 @@ export default function NotificationsPage() {
     if ("Notification" in window) {
       setNotificationPermission(Notification.permission)
     }
-  }
-
-  const handleLogout = () => {
-    storage.setAuthenticated(false)
-    router.push("/auth")
   }
 
   const requestNotificationPermission = async () => {
@@ -71,8 +58,6 @@ export default function NotificationsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header onLogout={handleLogout} />
-
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Notifications</h1>

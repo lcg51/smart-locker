@@ -1,72 +1,33 @@
-"use client"
+import { Box } from "lucide-react"
+import { LockerCard } from "@/components/locker-card"
+import { getLockersForUser } from "@/lib/lockers/queries"
+import { requireUser } from "@/lib/auth/session"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { storage } from "@/lib/storage"
-import { RoomCard } from "@/components/room-card"
-import { Header } from "@/components/header"
-import type { Room } from "@/types/locker"
-import { Loader2 } from "lucide-react"
-
-export default function DashboardPage() {
-  const router = useRouter()
-  const [rooms, setRooms] = useState<Room[]>([])
-  const [loading, setLoading] = useState(true)
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
-
-  useEffect(() => {
-    console.log("[v0] Dashboard - checking authentication...")
-    const isAuth = storage.isAuthenticated()
-    console.log("[v0] Dashboard auth status:", isAuth)
-
-    if (!isAuth) {
-      console.log("[v0] Not authenticated on dashboard, redirecting to auth...")
-      router.replace("/auth")
-      return
-    }
-
-    console.log("[v0] Authenticated, loading rooms...")
-    setIsCheckingAuth(false)
-    loadRooms()
-  }, [router])
-
-  const loadRooms = () => {
-    const loadedRooms = storage.getRooms()
-    console.log("[v0] Loaded rooms:", loadedRooms.length)
-    setRooms(loadedRooms)
-    setLoading(false)
-  }
-
-  const handleLogout = () => {
-    console.log("[v0] Logging out...")
-    storage.setAuthenticated(false)
-    router.replace("/auth")
-  }
-
-  if (isCheckingAuth || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
+export default async function DashboardPage() {
+  const user = await requireUser()
+  const lockers = await getLockersForUser(user.id)
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header onLogout={handleLogout} />
+    <main className="container mx-auto px-4 py-8 sm:py-10">
+      <div className="mb-8">
+        <p className="text-sm font-medium text-muted-foreground">Apartment access</p>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight">Your lockers</h1>
+        <p className="mt-2 text-muted-foreground">Check status and control the lockers in your apartment.</p>
+      </div>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 text-balance">Your Rooms</h1>
-          <p className="text-muted-foreground">Manage and control smart lockers in your apartment</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {rooms.map((room) => (
-            <RoomCard key={room.id} room={room} onUpdate={loadRooms} />
-          ))}
-        </div>
-      </main>
-    </div>
+      {lockers.length === 0 ? (
+        <section aria-labelledby="empty-lockers-title" className="rounded-xl border border-dashed bg-card px-6 py-12 text-center">
+          <Box aria-hidden="true" className="mx-auto size-9 text-muted-foreground" />
+          <h2 id="empty-lockers-title" className="mt-4 text-lg font-semibold">No lockers yet</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+            Your apartment lockers will appear here once your building administrator has set up your account.
+          </p>
+        </section>
+      ) : (
+        <section aria-label="Your lockers" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {lockers.map((locker) => <LockerCard key={locker.id} locker={locker} />)}
+        </section>
+      )}
+    </main>
   )
 }
