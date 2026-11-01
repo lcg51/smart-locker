@@ -245,10 +245,9 @@ Web push is post-MVP.
 Server actions handle app mutations (confirm/rename locker, lock, unlock,
 create/revoke share, settings). Route handlers are used where a browser form is not the caller:
 
-- `POST /api/webhooks/[vendor]` — signed vendor state callbacks, if the vendor
-  provides them.
-- `GET /api/lockers/[id]/state` — short-TTL state refresh for the dashboard, and
-  the polling path when the vendor has no webhooks.
+- `GET /api/lockers/[id]/state` — short-TTL state refresh for the dashboard.
+  The MVP polls; signed vendor webhooks are post-MVP unless the vendor supplies
+  them during integration.
 
 All mutations validate input with zod and authorize against the session user and
 locker ownership on the server. The client is never trusted for identity.
@@ -262,7 +261,7 @@ locker ownership on the server. The client is never trusted for identity.
   post-MVP.
 - Ambiguous timeout: re-query state before showing a result; if still unknown,
   tell the resident to check the locker.
-- Webhook out of order: state updates are idempotent and last-write-wins by
+- State refresh out of order: updates are idempotent and last-write-wins by
   vendor timestamp.
 - Grant exhausted or expired mid-flow: the unlock request fails closed.
 
@@ -308,8 +307,8 @@ resolving immediately because their grants are gone.
 
 Invite-only pilot with 5–10 residents. Start on `MockLockProvider`; switch a
 handful of real lockers to the vendor once provisioning and remote unlock are
-verified end to end. Feature-flag the vendor provider so a pilot locker can fall back to
-mock without a deploy.
+verified end to end. Feature-flag the vendor provider with `LOCK_PROVIDER` so
+the pilot can run on mock and switch in one environment change.
 
 Success signals for the MVP:
 
@@ -344,11 +343,13 @@ Success signals for the MVP:
 - Auto-relock duration per vendor and how it is surfaced to the guest.
 - Whether the optional local PIN ships in the first pilot build or the second.
 - Whether one gateway can serve several lockers in the same apartment.
-- Whether the pilot UI ships in Spanish, English, or both.
+- Whether the pilot UI ships in Spanish, English, or both. The plan ships
+  English copy first.
 
 ## Decisions made in this design (check these)
 
 - The pilot runs in Spain, with CE-marked hardware and GDPR/LOPDGDD handling.
+- The first pilot build uses English UI copy; Spanish is a follow-up.
 - We supply and pre-provision the lock and gateway; residents never use a vendor
   app, and the platform holds one vendor credential.
 - A gateway in each apartment is accepted; remote unlock depends on the
