@@ -9,9 +9,8 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Smart Locker - Apartment Management",
-  description: "Manage and control smart lockers in your apartment with Bluetooth integration",
-  generator: "v0.app",
+  title: "Smart Locker",
+  description: "Securely manage access to your apartment lockers.",
   icons: {
     icon: [
       {
