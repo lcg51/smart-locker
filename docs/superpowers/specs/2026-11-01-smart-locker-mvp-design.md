@@ -132,10 +132,12 @@ name would misdescribe what it now shows.
 ### Domain model (Postgres)
 
 - **User**: `id`, `email` (unique), `name`, `vendorGatewayId`,
-  `gatewayLastSeenAt`, `createdAt`, `deletedAt`.
+  `gatewayLastSeenAt`, `guestUnlockEmails` (default true), `createdAt`,
+  `deletedAt`.
 - **Locker**: `id`, `userId`, `name`, `vendor`, `vendorLockId` (unique per
   vendor), `status` (`locked` | `unlocked` | `unknown`), `batteryLevel`,
-  `lastSyncedAt`, `createdAt`, `deletedAt`. A locker belongs to exactly one user.
+  `lastSyncedAt`, `confirmedAt`, `createdAt`, `deletedAt`. A locker belongs to
+  exactly one user.
 - **ShareGrant**: `id`, `lockerId`, `createdByUserId`, `tokenHash` (unique),
   `guestLabel`, `expiresAt`, `maxUses`, `usedCount`, `revokedAt`, `createdAt`.
 - **LockEvent**: `id`, `lockerId`, `grantId?`, `actorType` (`owner` | `guest` |
@@ -267,12 +269,12 @@ locker ownership on the server. The client is never trusted for identity.
 ### Account deletion
 
 The settings page promises deletion, so deletion must be real and complete. On
-confirmation, one transaction deletes the user's sessions, vendor credentials,
-lockers, and share grants, and deletes their `LockEvent` rows. The `User` row and
-`AllowedEmail` row are removed last. The MVP keeps no anonymised audit trail
-after account deletion; retaining access history is a post-MVP policy decision,
-not a silent default. Outstanding share links stop resolving immediately because
-their grants are gone.
+confirmation, one transaction deletes the user's sessions, lockers, share grants,
+and `LockEvent` rows. The `User` row and `AllowedEmail` row are removed last. The
+vendor credential is platform-level, not the user's, so it is untouched. The MVP
+keeps no anonymised audit trail after account deletion; retaining access history
+is a post-MVP policy decision, not a silent default. Outstanding share links stop
+resolving immediately because their grants are gone.
 
 ## Migration from the current app
 
