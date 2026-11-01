@@ -128,7 +128,7 @@ Create `lib/shares/redeem.ts`:
 
 - [ ] **Step 6: Add the public page and action**
 
-Create `app/share/[token]/page.tsx` as a server component with `export const metadata: Metadata = { referrer: "no-referrer" }`. Resolve the token; on failure show the same generic message ("This link is no longer available") for every reason. On success show the locker name, guest label, expiry, and `<GuestUnlock />`.
+Create `app/share/[token]/page.tsx` as a server component with `export const metadata: Metadata = { referrer: "no-referrer" }`. In Next 16 `params` is a Promise; await it, then resolve the token. On failure show the same generic message ("This link is no longer available") for every reason. On success show the locker name, guest label, expiry, and `<GuestUnlock />`.
 
 Create `app/share/[token]/actions.ts` with a `redeemShare(token: string)` action that reads the client IP from `x-forwarded-for` (first entry) or `"unknown"` and calls `redeemShareToken`.
 

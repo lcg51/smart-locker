@@ -18,6 +18,14 @@ yarn-error.log*
 
 # env files
 .env*
+!.env.example
+!.env.test.example
+
+# superpowers workspace
+.superpowers/
+
+# vscdoe workspace
+.vscode
 
 # vercel
 .vercel
