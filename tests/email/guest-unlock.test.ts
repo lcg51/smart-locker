@@ -8,7 +8,10 @@ import { redeemShareToken } from "@/lib/shares/redeem"
 import { resetDb } from "@/tests/helpers/db"
 
 beforeEach(resetDb)
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.restoreAllMocks()
+})
 
 async function seed() {
   const { userId } = await provisionApartment({
