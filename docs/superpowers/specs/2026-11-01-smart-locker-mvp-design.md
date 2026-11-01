@@ -17,8 +17,8 @@ below serves that.
 
 ## Goals
 
-1. A resident can sign in, pair their lockers, and see each locker's state and
-   battery.
+1. A resident can sign in, confirm their pre-provisioned lockers, and see each
+   locker's state and battery.
 2. A resident can lock and unlock a locker from the web app, whether they are
    at home or away.
 3. A resident can create a share link for one locker that expires and can be
@@ -37,8 +37,9 @@ below serves that.
 - Billing, subscriptions, and self-serve public signup. The MVP runs as an
   invite-only pilot.
 - Offline or direct phone-to-lock unlocking. That is a later fallback, not MVP.
-- Physical installation service. Pairing instructions are in scope; installing
-  a lock on a cabinet is the resident's job.
+- Professional installation. We ship the lock and gateway with a step-by-step
+  guide; the resident plugs in the gateway and fits the lock. If fitting proves
+  too hard in the pilot, installation support becomes a follow-up.
 
 ## Anti-goals
 
@@ -58,9 +59,16 @@ These are failures even if the app technically works:
   shadcn/ui.
 - One resident per account; lockers belong to that account. The current
   Room/Locker split collapses into a single `Locker` with a display name.
-- The lock vendor must offer a cloud API for remote unlock and an e-key or
-  temporary-code mechanism, plus an API for device state and battery.
-- Hosting target: Vercel plus a managed Postgres (Neon or Supabase).
+- The lock vendor must offer a cloud API for remote unlock plus device state and
+  battery.
+- Pilot market is **Spain**. Hardware must be CE-marked and usable there; the
+  vendor must sell and support Spanish customers. The deployment must meet GDPR
+  and LOPDGDD obligations: EU data processing, a deletion path, a privacy policy,
+  and a data-processing agreement with the vendor.
+- We supply the hardware: one lock per locker plus one vendor gateway per
+  apartment. The gateway needs mains power and the apartment's Wi-Fi.
+- Hosting target: Vercel plus a managed Postgres (Neon or Supabase), with EU
+  regions where available.
 - Small team, MVP timeline measured in weeks, not quarters.
 - No native app means guest access is a web page, and resident access is a PWA.
 
@@ -69,10 +77,10 @@ These are failures even if the app technically works:
 1. **Rent the lock's cloud (chosen).** Integrate a locker/cabinet lock platform
    with an open API (TTLock as the reference implementation, igloohome as an
    alternative). Vendor supplies hardware, battery power, BLE, gateway, remote
-   unlock, and temporary e-keys. Our backend owns accounts, lockers, grants, and
+   unlock, and state reporting. Our backend owns accounts, lockers, grants, and
    audit, and calls the vendor API. Fastest route to real residents with no
    hardware risk. Trade-off: vendor lock-in, per-device and API cost, dependence
-   on their uptime and country coverage.
+   on their uptime, and Spain-specific certification and gateway availability.
 2. **Build our own lock.** ESP32 plus Wi-Fi and a relay/solenoid, talking MQTT or
    HTTPS to our backend. Cheapest per locker and full control, but firmware,
    power, connectivity, certification, and support become ours. Months before a
@@ -93,12 +101,17 @@ and a vendor removes the hardware risk from the critical path.
 Resident (PWA) ─┐
                 ├─ Next.js app (Vercel) ── Postgres
 Guest (link)  ──┘        │
-                         └─ LockProvider adapter ── vendor cloud API ── lock
+                         └─ LockProvider ── vendor cloud
+                                                 │
+                                    gateway (apartment Wi-Fi, mains)
+                                                 │
+                                               lock (BLE)
 ```
 
 The Next.js app serves both the resident dashboard and the public guest page.
 All state and authorization live server-side. The browser never holds a vendor
-credential.
+credential. Remote unlock reaches the lock through the vendor cloud and the
+gateway; there is no direct phone-to-lock path in the MVP.
 
 ### Routes
 
@@ -111,14 +124,15 @@ credential.
 | `/dashboard/activity` | resident | Full audit log, filterable |
 | `/dashboard/settings` | resident | Account, notification preference, sign out, delete data |
 | `/share/[token]` | guest | Validate grant, unlock, show result and expiry |
-| `/onboarding` | resident | Pair first locker, vendor authorization |
+| `/onboarding` | resident | Confirm and name the lockers we pre-provisioned |
 
 `/dashboard/notifications` is replaced by `/dashboard/activity`; keeping the old
 name would misdescribe what it now shows.
 
 ### Domain model (Postgres)
 
-- **User**: `id`, `email` (unique), `name`, `createdAt`, `deletedAt`.
+- **User**: `id`, `email` (unique), `name`, `vendorGatewayId`,
+  `gatewayLastSeenAt`, `createdAt`, `deletedAt`.
 - **Locker**: `id`, `userId`, `name`, `vendor`, `vendorLockId` (unique per
   vendor), `status` (`locked` | `unlocked` | `unknown`), `batteryLevel`,
   `lastSyncedAt`, `createdAt`, `deletedAt`. A locker belongs to exactly one user.
@@ -127,8 +141,9 @@ name would misdescribe what it now shows.
 - **LockEvent**: `id`, `lockerId`, `grantId?`, `actorType` (`owner` | `guest` |
   `system`), `action` (`unlock` | `lock`), `success`, `errorCode`, `ipHash`,
   `createdAt`. Append-only.
-- **VendorCredential**: `id`, `userId`, `vendor`, encrypted OAuth/API tokens,
-  `createdAt`, `updatedAt`. Never sent to the browser.
+- **VendorCredential**: `id`, `vendor` (unique), encrypted API/OAuth tokens,
+  `createdAt`, `updatedAt`. One platform-level credential for the pilot, not one
+  per resident. Never sent to the browser.
 - **AllowedEmail**: `email` (unique), `invitedBy`, `createdAt`, `acceptedAt`.
   Sign-in is rejected for emails that are not on this list.
 
@@ -139,7 +154,7 @@ source of truth and the cache is refreshed on read with a short TTL.
 
 ```ts
 interface LockProvider {
-  pair(input: PairInput): Promise<{ vendorLockId: string }>
+  provision(input: ProvisionInput): Promise<{ vendorLockId: string }>
   unlock(vendorLockId: string): Promise<LockResult>
   lock(vendorLockId: string): Promise<LockResult>
   getState(vendorLockId: string): Promise<LockerState>
@@ -150,12 +165,30 @@ Implementations: `TTLockProvider` (reference), `MockLockProvider` (local dev,
 tests, and the pilot before hardware arrives). The rest of the app depends only
 on the interface, so the vendor can change without touching product code.
 
-Guest access is a **server-side remote unlock using the owner's vendor
+Guest access is a **server-side remote unlock using the platform's vendor
 credential**. The `ShareGrant` row is the whole authorization record: revoking
 it revokes access, with no vendor-side e-key to create, track, or reconcile.
 Minting per-guest vendor e-keys is deliberately deferred; it would add a vendor
 grant lifecycle and a reconciliation job for no MVP benefit, because the guest
 uses our page rather than the vendor's app.
+
+### Hardware and provisioning (pilot)
+
+- Each apartment kit is one vendor lock per locker plus one vendor gateway. We
+  buy, configure, and bind the locks to the platform credential before shipping;
+  the resident never creates a vendor account.
+- A resident is provisioned by an ops script: it creates the `User`, the
+  `Locker` rows, and links the gateway. Their invited email is added to
+  `AllowedEmail` at the same time.
+- On first sign-in the resident sees their pre-provisioned lockers, confirms
+  them, and names them. There is no BLE pairing in our app and no vendor app on
+  the resident's phone. If the vendor requires its own app for initial binding,
+  ops does that during provisioning, not the resident.
+- The gateway runs on the apartment's 2.4 GHz Wi-Fi with mains power. It is the
+  single point of failure for remote unlock, so the setup guide covers it and the
+  UI reports it as offline when it stops checking in.
+- Hardware for the pilot is CE-marked, ships with a Spanish plug where needed,
+  and stays a small batch until the pilot proves demand.
 
 ### Authentication and sessions
 
@@ -207,11 +240,13 @@ Web push is post-MVP.
 
 ### API surface
 
-Server actions handle app mutations (pair, lock, unlock, create/revoke share,
-settings). Route handlers are used where a browser form is not the caller:
+Server actions handle app mutations (confirm/rename locker, lock, unlock,
+create/revoke share, settings). Route handlers are used where a browser form is not the caller:
 
-- `POST /api/webhooks/[vendor]` — vendor state and e-key callbacks.
-- `GET /api/lockers/[id]/state` — short-TTL state refresh for the dashboard.
+- `POST /api/webhooks/[vendor]` — signed vendor state callbacks, if the vendor
+  provides them.
+- `GET /api/lockers/[id]/state` — short-TTL state refresh for the dashboard, and
+  the polling path when the vendor has no webhooks.
 
 All mutations validate input with zod and authorize against the session user and
 locker ownership on the server. The client is never trusted for identity.
@@ -220,6 +255,9 @@ locker ownership on the server. The client is never trusted for identity.
 
 - Vendor unreachable: the action fails with a clear message, the `LockEvent`
   records the failure, and the UI offers retry. No optimistic "unlocked" state.
+- Gateway offline or apartment Wi-Fi down: the locker shows as offline, unlock
+  fails with that explanation, and the event is logged. Local BLE fallback is
+  post-MVP.
 - Ambiguous timeout: re-query state before showing a result; if still unknown,
   tell the resident to check the locker.
 - Webhook out of order: state updates are idempotent and last-write-wins by
@@ -243,7 +281,7 @@ their grants are gone.
 | `lib/storage.ts` (`localStorage`) | Server data access + API/server actions |
 | `lib/bluetooth-service.ts` | `LockProvider` adapter; `MockLockProvider` for dev |
 | `types/locker.ts` `Room` + `Locker` | One `Locker` record; `Room` is just the locker's name |
-| Seeded four rooms | Removed; empty state with "Pair your first locker" |
+| Seeded four rooms | Removed; lockers are pre-provisioned, with a setup empty state |
 | `authenticated=true` cookie + `proxy.ts` | Auth.js session and server-side checks |
 | PIN as the only auth | Optional local app lock, clearly non-security |
 | Client-side access logs (last 100) | Server-side `LockEvent`, paginated and filterable |
@@ -258,22 +296,22 @@ their grants are gone.
 - **Integration**: create grant → redeem → revoke; concurrent redemptions of a
   `maxUses: 1` grant consume exactly one use; failed unlock does not consume a
   use; vendor failure writes a failed event.
-- **End-to-end** (Playwright, mock provider): resident signs in, pairs a locker,
-  unlocks it, creates a share, guest redeems it, owner revokes it, guest is
-  denied.
+- **End-to-end** (Playwright, mock provider): resident signs in, confirms a
+  pre-provisioned locker, unlocks it, creates a share, guest redeems it, owner
+  revokes it, guest is denied.
 - **Security checks**: expired and revoked links, replayed links, token
   enumeration, cross-user locker access, guest page leakage.
 
 ## Rollout
 
 Invite-only pilot with 5–10 residents. Start on `MockLockProvider`; switch a
-handful of real lockers to the vendor once pairing and remote unlock are verified
-end to end. Feature-flag the vendor provider so a pilot locker can fall back to
+handful of real lockers to the vendor once provisioning and remote unlock are
+verified end to end. Feature-flag the vendor provider so a pilot locker can fall back to
 mock without a deploy.
 
 Success signals for the MVP:
 
-- A resident pairs a locker and unlocks it at least once a week.
+- A resident confirms a locker and unlocks it at least once a week.
 - At least one share link is created and redeemed per active resident per month.
 - Unlock success rate above 95% excluding lock-offline cases.
 - No security incident involving a share link.
@@ -283,25 +321,36 @@ Success signals for the MVP:
 | Risk | Mitigation |
 |---|---|
 | Vendor API unavailable or rate-limited | Adapter boundary, clear failure UI, retry, vendor with an SLA |
-| Vendor lacks coverage in target country | Evaluate two vendors before committing; adapter keeps the door open |
+| Vendor lacks Spain coverage, CE marking, or gateway stock | Evaluate two vendors for Spain before committing; adapter keeps the door open |
+| Gateway or apartment Wi-Fi offline | Offline state in the UI, setup guide, support path, local BLE fallback later |
+| Hardware logistics and cost | Small pilot batch, price per kit before shipping, cap lockers per account |
+| GDPR/LOPDGDD non-compliance | EU hosting where possible, vendor DPA, privacy policy, real deletion path |
 | Share token leaks (forwarded message) | Short expiry, use cap, revocation, rate limits, no sensitive data on the page |
 | iPhone link UX (no app installed) | Plain web page, no BLE, no install step for guests |
-| Lock installation friction | Pairing guide, mock mode for demos, support path |
+| Lock and gateway installation friction | Illustrated setup guide, mock mode for demos, support path |
 | Vendor credential compromised | Encrypt at rest, never expose to the browser, rotate on suspicion, audit every call |
 | Cost per locker | Price before pilot; cap lockers per account |
 
 ## Open decisions left to the builder
 
-- Final vendor (TTLock assumed for the reference implementation).
+- Final vendor, evaluated for Spain: CE marking, gateway availability, Spanish
+  support, EU data processing, and remote-unlock API (TTLock assumed for the
+  reference implementation).
 - ORM (Prisma or Drizzle) and Postgres host.
 - Email provider for magic links and guest-unlock notifications.
 - Rate-limiting implementation (Upstash Redis or Postgres-backed).
 - Auto-relock duration per vendor and how it is surfaced to the guest.
 - Whether the optional local PIN ships in the first pilot build or the second.
-- Exact pairing UX and what happens when a vendor account already owns the lock.
+- Whether one gateway can serve several lockers in the same apartment.
+- Whether the pilot UI ships in Spanish, English, or both.
 
 ## Decisions made in this design (check these)
 
+- The pilot runs in Spain, with CE-marked hardware and GDPR/LOPDGDD handling.
+- We supply and pre-provision the lock and gateway; residents never use a vendor
+  app, and the platform holds one vendor credential.
+- A gateway in each apartment is accepted; remote unlock depends on the
+  apartment's Wi-Fi and mains power.
 - Guest access needs no account; the link is the credential.
 - Guest unlocks are server-side remote unlocks; no per-guest vendor e-keys in
   the MVP, so revoking the grant is sufficient.
