@@ -24,6 +24,9 @@ yarn-error.log*
 # superpowers workspace
 .superpowers/
 
+# vscdoe workspace
+.vscode
+
 # vercel
 .vercel
 
