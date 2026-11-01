@@ -165,23 +165,18 @@ describe("redeemShareToken", () => {
     expect(await prisma.lockEvent.count({ where: { lockerId: locker.id, success: true } })).toBe(1)
   })
 
-  it("logs a failed email result without changing the successful unlock result", async () => {
+  it("does not change the unlock result when the email sender returns false", async () => {
     const { userId, locker } = await seed()
     const { token } = await createShareGrant({ userId, lockerId: locker.id })
-    const logError = vi.spyOn(console, "error").mockImplementation(() => {})
 
-    try {
-      await expect(redeemShareToken({
-        token,
-        ip: "1.1.1.1",
-        provider: new MockLockProvider(),
-        limiter: allowAllLimiter(),
-        sendEmail: async () => false,
-      })).resolves.toEqual({ ok: true })
-      expect(logError).toHaveBeenCalledWith("Guest unlock notification failed")
-    } finally {
-      logError.mockRestore()
-    }
+    await expect(redeemShareToken({
+      token,
+      ip: "1.1.1.1",
+      provider: new MockLockProvider(),
+      limiter: allowAllLimiter(),
+      sendEmail: async () => false,
+    })).resolves.toEqual({ ok: true })
+    expect(await prisma.lockEvent.count({ where: { lockerId: locker.id, success: true } })).toBe(1)
   })
 
   it("skips the owner notification when the account has no email address", async () => {

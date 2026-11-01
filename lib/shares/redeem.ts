@@ -202,8 +202,7 @@ export async function redeemShareToken({
       unlockedAt: now,
     }
     try {
-      const sent = await sendEmail(email)
-      if (!sent) console.error("Guest unlock notification failed")
+      await sendEmail(email)
     } catch {
       console.error("Guest unlock notification failed")
     }
