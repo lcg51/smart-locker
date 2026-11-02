@@ -69,6 +69,8 @@ export function LockerCard({ locker }: { locker: LockerRecord }) {
 
   useEffect(() => {
     const controller = new AbortController()
+    // Initial polling starts after mount; the async update is not a render-time setState.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshState(controller.signal)
     const interval = window.setInterval(() => {
       if (document.visibilityState === "visible") void refreshState(controller.signal)
@@ -137,7 +139,7 @@ export function LockerCard({ locker }: { locker: LockerRecord }) {
 
       {refreshError && (
         <div className="mt-4 flex items-center justify-between gap-3 rounded-md bg-muted px-3 py-2 text-sm" role="status">
-          <span>Status couldn't be refreshed.</span>
+          <span>Status couldn&apos;t be refreshed.</span>
           <Button className="min-h-11 shrink-0" onClick={() => void refreshState()} size="sm" type="button" variant="ghost">
             Retry status
           </Button>

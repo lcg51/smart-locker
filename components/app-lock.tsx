@@ -6,7 +6,6 @@ import { PinPad } from "@/components/pin-pad"
 import { SignOutButton } from "@/components/sign-out-button"
 import { Button } from "@/components/ui/button"
 import {
-  parsePinCredential,
   PIN_STORAGE_KEY,
   PIN_UNLOCKED_STORAGE_KEY,
   readPinLockState,
@@ -28,8 +27,10 @@ export function AppLock({ children }: { children: ReactNode }) {
       () => window.localStorage.getItem(PIN_STORAGE_KEY),
       () => window.sessionStorage.getItem(PIN_UNLOCKED_STORAGE_KEY),
     )
+    /* eslint-disable react-hooks/set-state-in-effect -- device-local lock state is read once after mount */
     setCredential(state.credential)
     setLockState(state.state)
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [])
 
   async function handlePinComplete(pin: string) {

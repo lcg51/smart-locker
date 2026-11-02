@@ -19,7 +19,7 @@ describe("parseEnv", () => {
   })
 
   it("rejects a missing database url", () => {
-    const { DATABASE_URL, ...rest } = valid
+    const { DATABASE_URL: _DATABASE_URL, ...rest } = valid
     expect(() => parseEnv(rest)).toThrow()
   })
 })

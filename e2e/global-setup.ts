@@ -1,8 +1,11 @@
 import { execFileSync } from "node:child_process"
 import { prisma } from "../lib/db"
 import { provisionApartment } from "../lib/ops/provision"
+import { assertTestDatabaseUrl } from "../lib/test-db-guard"
 
 export default async function globalSetup(): Promise<void> {
+  assertTestDatabaseUrl(process.env.DATABASE_URL)
+
   execFileSync(
     "pnpm",
     ["exec", "dotenv", "-e", ".env.test", "--", "prisma", "migrate", "reset", "--force", "--skip-seed"],
