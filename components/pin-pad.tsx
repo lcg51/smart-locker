@@ -57,7 +57,7 @@ export function PinPad({ onComplete, maxLength = 4 }: PinPadProps) {
           </Button>
         ))}
         <div className="col-start-3">
-          <Button variant="ghost" size="lg" onClick={handleDelete} className="h-16 w-16" disabled={pin.length === 0}>
+          <Button aria-label="Delete last digit" variant="ghost" size="lg" onClick={handleDelete} className="h-16 w-16" disabled={pin.length === 0}>
             <X className="h-6 w-6" />
           </Button>
         </div>

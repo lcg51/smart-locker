@@ -1,7 +1,7 @@
 import { Activity, LockKeyhole, LogOut, Settings } from "lucide-react"
 import Link from "next/link"
-import { logout } from "@/app/actions/auth"
 import { Button } from "@/components/ui/button"
+import { SignOutButton } from "@/components/sign-out-button"
 
 export function Header() {
   return (
@@ -28,11 +28,9 @@ export function Header() {
               <Settings aria-hidden="true" className="size-5" />
             </Link>
           </Button>
-          <form action={logout}>
-            <Button aria-label="Sign out" className="size-11" type="submit" variant="ghost" size="icon">
-              <LogOut aria-hidden="true" className="size-5" />
-            </Button>
-          </form>
+          <SignOutButton ariaLabel="Sign out" className="size-11" size="icon">
+            <LogOut aria-hidden="true" className="size-5" />
+          </SignOutButton>
         </nav>
       </div>
     </header>

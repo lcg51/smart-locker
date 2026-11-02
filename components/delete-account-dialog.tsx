@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { AlertTriangle } from "lucide-react"
 import { deleteAccountAction } from "@/app/actions/account"
 import { Button } from "@/components/ui/button"
+import { clearPinState } from "@/lib/pin"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +24,7 @@ export function DeleteAccountDialog() {
   function handleDelete(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault()
     setError(null)
+    clearPinState()
     startTransition(async () => {
       try {
         await deleteAccountAction()
