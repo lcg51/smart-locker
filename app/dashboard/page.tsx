@@ -2,10 +2,12 @@ import { Box } from "lucide-react"
 import { LockerCard } from "@/components/locker-card"
 import { getLockersForUser } from "@/lib/lockers/queries"
 import { requireUser } from "@/lib/auth/session"
+import { redirect } from "next/navigation"
 
 export default async function DashboardPage() {
   const user = await requireUser()
   const lockers = await getLockersForUser(user.id)
+  if (lockers.some((locker) => locker.confirmedAt === null)) redirect("/onboarding")
 
   return (
     <main className="container mx-auto px-4 py-8 sm:py-10">
