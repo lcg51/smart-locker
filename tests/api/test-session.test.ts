@@ -27,10 +27,16 @@ function sessionRequest(body: unknown): Request {
 }
 
 describe("POST /api/test/session", () => {
-  it("returns 404 when E2E mode is not enabled", async () => {
+  it("returns 404 for a known resident when E2E mode is not enabled", async () => {
+    await provisionApartment({
+      email: "ana@example.com",
+      gatewayId: "gw-gate",
+      lockers: [{ name: "Kitchen", vendor: "mock", vendorLockId: "gate-lock-1" }],
+    })
     vi.mocked(getEnv).mockReturnValue({ E2E: undefined } as ReturnType<typeof getEnv>)
 
     await expect(POST(sessionRequest({ email: "ana@example.com" }))).resolves.toMatchObject({ status: 404 })
+    expect(await prisma.session.count()).toBe(0)
     expect(mocks.cookieSet).not.toHaveBeenCalled()
   })
 
