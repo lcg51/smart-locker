@@ -72,7 +72,7 @@ export function ShareDialog({ lockerId, lockerName }: { lockerId: string; locker
 
         {createdShare ? (
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Your link is ready. Copy it now; it won't be shown again after you close this dialog.</p>
+            <p className="text-sm text-muted-foreground">Your link is ready. Copy it now; it won&apos;t be shown again after you close this dialog.</p>
             <div className="space-y-2">
               <Label htmlFor="share-url">Share link</Label>
               <Input

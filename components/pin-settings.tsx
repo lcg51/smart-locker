@@ -25,7 +25,9 @@ export function PinSettings() {
 
   useEffect(() => {
     try {
+      /* eslint-disable react-hooks/set-state-in-effect -- device-local PIN state is read once after mount */
       setHasPin(window.localStorage.getItem(PIN_STORAGE_KEY) !== null)
+      /* eslint-enable react-hooks/set-state-in-effect */
     } catch {
       setError("Device storage is unavailable, so a PIN cannot be saved here.")
     } finally {
