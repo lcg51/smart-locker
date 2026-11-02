@@ -2,6 +2,7 @@ export const PIN_STORAGE_KEY = "smart-locker-pin"
 export const PIN_UNLOCKED_STORAGE_KEY = "smart-locker-unlocked"
 
 export type PinCredential = { salt: string; hash: string }
+export type PinLockState = "open" | "locked" | "invalid" | "storage-unavailable"
 
 const SALT_PATTERN = /^[0-9a-f]{32}$/i
 const HASH_PATTERN = /^[0-9a-f]{64}$/i
@@ -75,18 +76,52 @@ export function parsePinCredential(value: string | null): PinCredential | null {
   return { salt: salt.toLowerCase(), hash: hash.toLowerCase() }
 }
 
-export function clearPinState(
-  localStore: Pick<Storage, "removeItem"> = localStorage,
-  sessionStore: Pick<Storage, "removeItem"> = sessionStorage,
-): void {
+export function readPinLockState(
+  readPinRecord: () => string | null,
+  readSessionFlag: () => string | null,
+): { state: PinLockState; credential: PinCredential | null } {
+  let storedPin: string | null
   try {
-    localStore.removeItem(PIN_STORAGE_KEY)
+    storedPin = readPinRecord()
+  } catch {
+    return { state: "storage-unavailable", credential: null }
+  }
+
+  if (storedPin === null) return { state: "open", credential: null }
+
+  const credential = parsePinCredential(storedPin)
+  if (!credential) return { state: "invalid", credential: null }
+
+  try {
+    return {
+      state: readSessionFlag() === "1" ? "open" : "locked",
+      credential,
+    }
+  } catch {
+    return { state: "locked", credential }
+  }
+}
+
+export function clearPinState(
+  localStore?: Pick<Storage, "removeItem">,
+  sessionStore?: Pick<Storage, "removeItem">,
+): { pinRemoved: boolean; unlockedFlagRemoved: boolean } {
+  let pinRemoved = false
+  let unlockedFlagRemoved = false
+
+  try {
+    const store = localStore ?? globalThis.localStorage
+    store.removeItem(PIN_STORAGE_KEY)
+    pinRemoved = true
   } catch {
     // Storage can be unavailable in restrictive browser contexts.
   }
   try {
-    sessionStore.removeItem(PIN_UNLOCKED_STORAGE_KEY)
+    const store = sessionStore ?? globalThis.sessionStorage
+    store.removeItem(PIN_UNLOCKED_STORAGE_KEY)
+    unlockedFlagRemoved = true
   } catch {
     // Still attempt to clear the other storage even if one fails.
   }
+  return { pinRemoved, unlockedFlagRemoved }
 }

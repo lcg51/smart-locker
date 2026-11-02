@@ -7,6 +7,7 @@ import {
   generatePinSalt,
   hashPin,
   parsePinCredential,
+  readPinLockState,
   serializePinCredential,
   verifyPin,
   PIN_STORAGE_KEY,
@@ -51,13 +52,36 @@ describe("local PIN hashing", () => {
     expect(parsePinCredential("1234")).toBeNull()
   })
 
+  it("fails open with an explicit recovery state if local storage cannot be read", () => {
+    expect(readPinLockState(
+      () => { throw new Error("storage blocked") },
+      () => null,
+    )).toEqual({ state: "storage-unavailable", credential: null })
+  })
+
+  it("opens without a PIN, locks with a PIN, and honors the per-tab unlock flag", () => {
+    const salt = "0123456789abcdef0123456789abcdef"
+    const hash = "abcdef0123456789".repeat(4)
+    const record = `${salt}:${hash}`
+
+    expect(readPinLockState(() => null, () => null)).toEqual({ state: "open", credential: null })
+    expect(readPinLockState(() => record, () => null)).toEqual({
+      state: "locked",
+      credential: { salt, hash },
+    })
+    expect(readPinLockState(() => record, () => "1")).toEqual({
+      state: "open",
+      credential: { salt, hash },
+    })
+  })
+
   it("clears the PIN and per-tab unlock flag without clearing unrelated storage", () => {
     const localValues = new Map([[PIN_STORAGE_KEY, "salt:hash"], ["other", "keep"]])
     const sessionValues = new Map([[PIN_UNLOCKED_STORAGE_KEY, "1"], ["other", "keep"]])
     const localStore = { removeItem: (key: string) => localValues.delete(key) }
     const sessionStore = { removeItem: (key: string) => sessionValues.delete(key) }
 
-    clearPinState(localStore, sessionStore)
+    expect(clearPinState(localStore, sessionStore)).toEqual({ pinRemoved: true, unlockedFlagRemoved: true })
 
     expect(localValues.has(PIN_STORAGE_KEY)).toBe(false)
     expect(sessionValues.has(PIN_UNLOCKED_STORAGE_KEY)).toBe(false)
@@ -65,8 +89,47 @@ describe("local PIN hashing", () => {
     expect(sessionValues.get("other")).toBe("keep")
   })
 
+  it("reports failed PIN removal while still clearing the session unlock flag", () => {
+    const sessionValues = new Map([[PIN_UNLOCKED_STORAGE_KEY, "1"]])
+    const localStore = { removeItem: () => { throw new Error("storage denied") } }
+    const sessionStore = { removeItem: (key: string) => sessionValues.delete(key) }
+
+    expect(clearPinState(localStore, sessionStore)).toEqual({ pinRemoved: false, unlockedFlagRemoved: true })
+    expect(sessionValues.has(PIN_UNLOCKED_STORAGE_KEY)).toBe(false)
+  })
+
+  it("does not let blocked localStorage prevent sign-out storage cleanup", () => {
+    const localDescriptor = Object.getOwnPropertyDescriptor(globalThis, "localStorage")
+    const sessionDescriptor = Object.getOwnPropertyDescriptor(globalThis, "sessionStorage")
+    const sessionValues = new Map([[PIN_UNLOCKED_STORAGE_KEY, "1"]])
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      get() { throw new Error("local storage blocked") },
+    })
+    Object.defineProperty(globalThis, "sessionStorage", {
+      configurable: true,
+      value: { removeItem: (key: string) => sessionValues.delete(key) },
+    })
+
+    try {
+      expect(clearPinState()).toEqual({ pinRemoved: false, unlockedFlagRemoved: true })
+      expect(sessionValues.has(PIN_UNLOCKED_STORAGE_KEY)).toBe(false)
+    } finally {
+      if (localDescriptor) Object.defineProperty(globalThis, "localStorage", localDescriptor)
+      else Reflect.deleteProperty(globalThis, "localStorage")
+      if (sessionDescriptor) Object.defineProperty(globalThis, "sessionStorage", sessionDescriptor)
+      else Reflect.deleteProperty(globalThis, "sessionStorage")
+    }
+  })
+
   it("gives the keypad delete control an accessible name", () => {
     const markup = renderToStaticMarkup(createElement(PinPad, { onComplete: () => {} }))
     expect(markup).toContain('aria-label="Delete last digit"')
+  })
+
+  it("disables keypad buttons while a PIN verification is pending", () => {
+    const markup = renderToStaticMarkup(createElement(PinPad, { onComplete: () => {}, disabled: true }))
+    const firstNumberButton = markup.match(/<button[^>]*>1<\/button>/)?.[0]
+    expect(firstNumberButton).toContain('disabled=""')
   })
 })

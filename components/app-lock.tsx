@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import { KeyRound, ShieldCheck } from "lucide-react"
 import { PinPad } from "@/components/pin-pad"
 import { SignOutButton } from "@/components/sign-out-button"
@@ -9,44 +9,38 @@ import {
   parsePinCredential,
   PIN_STORAGE_KEY,
   PIN_UNLOCKED_STORAGE_KEY,
+  readPinLockState,
   verifyPin,
   type PinCredential,
 } from "@/lib/pin"
 
-type LockState = "loading" | "open" | "locked" | "invalid"
+type LockState = "loading" | "open" | "locked" | "invalid" | "storage-unavailable"
 
 export function AppLock({ children }: { children: ReactNode }) {
   const [lockState, setLockState] = useState<LockState>("loading")
   const [credential, setCredential] = useState<PinCredential | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isVerifying, setIsVerifying] = useState(false)
+  const verificationInFlight = useRef(false)
 
   useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(PIN_STORAGE_KEY)
-      if (stored === null) {
-        setLockState("open")
-        return
-      }
-
-      const parsed = parsePinCredential(stored)
-      setCredential(parsed)
-      if (!parsed) {
-        setLockState("invalid")
-        return
-      }
-
-      setLockState(window.sessionStorage.getItem(PIN_UNLOCKED_STORAGE_KEY) === "1" ? "open" : "locked")
-    } catch {
-      setLockState("invalid")
-    }
+    const state = readPinLockState(
+      () => window.localStorage.getItem(PIN_STORAGE_KEY),
+      () => window.sessionStorage.getItem(PIN_UNLOCKED_STORAGE_KEY),
+    )
+    setCredential(state.credential)
+    setLockState(state.state)
   }, [])
 
   async function handlePinComplete(pin: string) {
+    if (verificationInFlight.current) return
     if (!credential) {
       setLockState("invalid")
       return
     }
 
+    verificationInFlight.current = true
+    setIsVerifying(true)
     setError(null)
     try {
       const matches = await verifyPin(pin, credential.salt, credential.hash)
@@ -63,6 +57,9 @@ export function AppLock({ children }: { children: ReactNode }) {
       setLockState("open")
     } catch {
       setError("The PIN could not be checked. Sign out and sign in again to clear this device lock.")
+    } finally {
+      verificationInFlight.current = false
+      setIsVerifying(false)
     }
   }
 
@@ -91,9 +88,19 @@ export function AppLock({ children }: { children: ReactNode }) {
           <p className="mt-6 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">
             This device’s PIN data is unavailable. Sign out to clear the device lock.
           </p>
+        ) : lockState === "storage-unavailable" ? (
+          <div className="mt-6 space-y-3">
+            <p className="rounded-lg border bg-muted/50 p-3 text-sm text-muted-foreground">
+              This browser can’t access local storage, so the optional device PIN can’t be checked.
+            </p>
+            <Button className="min-h-11 w-full" onClick={() => setLockState("open")} type="button">
+              Continue without device PIN
+            </Button>
+          </div>
         ) : (
           <div className="mt-6">
-            <PinPad onComplete={handlePinComplete} />
+            <PinPad disabled={isVerifying} onComplete={handlePinComplete} />
+            {isVerifying && <p aria-live="polite" className="mt-4 text-sm text-muted-foreground" role="status">Checking PIN…</p>}
             {error && <p aria-live="polite" className="mt-4 text-sm text-destructive" role="alert">{error}</p>}
           </div>
         )}

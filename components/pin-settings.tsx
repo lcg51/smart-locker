@@ -86,7 +86,12 @@ export function PinSettings() {
   }
 
   function removePin() {
-    clearPinState()
+    const cleared = clearPinState()
+    if (!cleared.pinRemoved) {
+      setError("Couldn’t remove the PIN from this browser. Check device storage and try again.")
+      setMessage(null)
+      return
+    }
     setHasPin(false)
     setStep("idle")
     setFirstPin(null)
