@@ -16,6 +16,32 @@ export type LockerActionResult = {
   state?: LockerState
 }
 
+export async function renameLocker(input: {
+  userId: string
+  lockerId: string
+  name: string
+}): Promise<boolean> {
+  const name = input.name.trim()
+  if (name.length < 1 || name.length > 40) return false
+
+  const result = await prisma.locker.updateMany({
+    where: { id: input.lockerId, userId: input.userId, deletedAt: null },
+    data: { name },
+  })
+  return result.count === 1
+}
+
+export async function confirmLocker(input: {
+  userId: string
+  lockerId: string
+}): Promise<boolean> {
+  const result = await prisma.locker.updateMany({
+    where: { id: input.lockerId, userId: input.userId, deletedAt: null },
+    data: { confirmedAt: new Date() },
+  })
+  return result.count === 1
+}
+
 type Command = "unlock" | "lock"
 
 function statusToDbStatus(status: LockerState["status"]): LockStatus {
