@@ -76,7 +76,7 @@ pnpm test:e2e
 
 The E2E suite requires port 3100 to be free. It seeds `ana@example.com` with a `Kitchen` locker, confirms onboarding, unlocks, creates a share link, redeems it as a guest, and verifies revocation fails closed. Guest-unlock email is disabled for the seeded resident so tests do not call Resend.
 
-The test database reset is destructive. Never point `DATABASE_URL` at a database whose data you need to keep.
+**Test database safety:** both `pnpm test` and `pnpm test:e2e` delete data. `pnpm test` clears every application table between tests, and the E2E setup runs `prisma migrate reset`. Exported environment variables take precedence over `.env.test`, so a shell-exported `DATABASE_URL` can silently redirect those destructive operations. Run tests in a shell with no non-test `DATABASE_URL` exported. As a guard, the test helpers and E2E setup refuse to proceed unless the database name ends with `_test`.
 
 ## Configuration
 

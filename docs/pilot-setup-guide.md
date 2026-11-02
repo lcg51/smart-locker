@@ -1,6 +1,8 @@
 # Pilot Setup Guide
 
-This guide is for the operator running the first Smart Locker pilot in Spain. It covers hardware, vendor credentials, resident provisioning, deployment, and acceptance checks.
+This guide is for the operator running the first Smart Locker pilot in Spain. It covers hardware, vendor credentials, deployment, resident provisioning, and acceptance checks.
+
+Commands that touch the pilot database require `DATABASE_URL` to point at that database. Exported environment variables override values in `.env`, so confirm the target before running migrations or provisioning.
 
 ## 1. Hardware
 
@@ -22,9 +24,20 @@ pnpm tsx scripts/seed-vendor-credential.ts
 
 with `TTLOCK_ACCESS_TOKEN` and `CREDENTIAL_ENCRYPTION_KEY` set. The script does not exist in Phase 1; until it does, keep `LOCK_PROVIDER=mock`.
 
-## 3. Provision an apartment
+## 3. Deploy and migrate
 
-Run the provisioning command against the pilot database:
+- Use PostgreSQL in an EU region where available. Confirm the provider's region and backup policy.
+- Point `DATABASE_URL` at the pilot database.
+- Run `pnpm db:deploy` against that database. The schema must exist before provisioning. Do not use `prisma migrate reset` outside the test environment.
+- Set production values for `APP_URL`, `AUTH_SECRET`, `EMAIL_FROM`, and `RESEND_API_KEY`.
+- Verify the Resend sending domain and add the required DNS records before inviting residents.
+- Configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` if the app runs more than one instance; otherwise rate limits are per-process.
+- Put a trusted proxy in front of the app so the first `x-forwarded-for` entry is the real client IP. The share limiter keys on that value.
+- Keep `LOCK_PROVIDER=mock` until hardware and Task 14 are ready.
+
+## 4. Provision an apartment
+
+With `DATABASE_URL` still pointing at the migrated pilot database, run:
 
 ```bash
 pnpm provision \
@@ -49,16 +62,6 @@ pnpm provision --email you@example.com --gateway local-gw \
   --locker "Kitchen:mock:local-kitchen"
 ```
 
-## 4. Deploy
-
-- Use PostgreSQL in an EU region where available. Confirm the provider's region and backup policy.
-- Run `pnpm db:deploy` against the production database. Do not use `prisma migrate reset` outside the test environment.
-- Set production values for `APP_URL`, `AUTH_SECRET`, `EMAIL_FROM`, and `RESEND_API_KEY`.
-- Verify the Resend sending domain and add the required DNS records before inviting residents.
-- Configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` if the app runs more than one instance; otherwise rate limits are per-process.
-- Put a trusted proxy in front of the app so the first `x-forwarded-for` entry is the real client IP. The share limiter keys on that value.
-- Keep `LOCK_PROVIDER=mock` until hardware and Task 14 are ready.
-
 ## 5. Resident acceptance
 
 Ask the resident to:
@@ -81,10 +84,11 @@ Ask the resident to:
 
 If the pilot must be paused:
 
-- Set `LOCK_PROVIDER=mock` and redeploy, or disable the affected lockers.
-- Revoke active share grants from the owner pages.
+- Take the app offline or block mutations at the proxy. There is no operator-wide read-only switch, and mock mode still simulates successful lock/unlock commands.
+- Setting `LOCK_PROVIDER=mock` only prevents real vendor calls. It does not pause the app; use it alongside taking the app offline if hardware must be isolated.
+- Revoke active share grants from each owner's locker page. There is no bulk revoke control, so if links must stop immediately, take the app offline and remove guest access at the network layer.
 - Rotate vendor credentials and update the encrypted credential record once Task 14 is available.
-- Tell residents the app is read-only or unavailable; do not leave active guest links working.
+- Tell residents the service is unavailable rather than implying the app is read-only.
 - Preserve database backups according to the pilot's data-retention policy. Account deletion is still available and is permanent.
 
 ## Incident notes

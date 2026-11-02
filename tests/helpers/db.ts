@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/db"
+import { assertTestDatabaseUrl } from "@/lib/test-db-guard"
 
 export async function resetDb(): Promise<void> {
+  assertTestDatabaseUrl(process.env.DATABASE_URL)
   await prisma.lockEvent.deleteMany()
   await prisma.shareGrant.deleteMany()
   await prisma.locker.deleteMany()
