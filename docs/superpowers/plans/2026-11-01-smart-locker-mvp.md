@@ -33,8 +33,9 @@
 1. **Concurrent redemption of a `maxUses: 1` grant.** Two guests tap at once; exactly one unlock may happen and `usedCount` must end at 1. Pinned in Task 7.
 2. **A revoked or expired link reopened.** It must fail closed with the same generic message as an unknown link. Pinned in Task 7.
 3. **Cross-user locker access.** A resident requesting another resident's locker id must get "not found" and produce no event. Pinned in Task 5.
-4. **Provider timeout or crash.** The UI must not claim success, and the event must record failure. Pinned in Tasks 5 and 14.
+4. **Provider timeout or crash.** The UI must not claim success, and the event must record failure. Pinned in Tasks 5 and 15.
 5. **Email provider failure during a guest unlock.** The unlock must still succeed. Pinned in Task 8.
+6. **Wrong-theme flash on first load.** A device set to dark must not paint a light screen before the saved or system theme applies. Pinned in Task 14.
 
 ---
 
@@ -57,7 +58,8 @@ Work the tasks in order. Each file is self-contained: it lists its own files, in
 | 11 | [Optional local PIN app lock](2026-11-01-smart-locker-mvp/task-11-local-pin-lock.md) | Phase 1 | Task 05, Task 09 |
 | 12 | [End-to-end share flow and test session route](2026-11-01-smart-locker-mvp/task-12-e2e-share-flow.md) | Phase 1 | Task 04, Task 05, Task 06, Task 07, Task 10 |
 | 13 | [Legacy cleanup, typecheck, lint, and README](2026-11-01-smart-locker-mvp/task-13-legacy-cleanup-readme.md) | Phase 1 | Task 01, Task 02, Task 03, Task 04, Task 05, Task 06, Task 07, Task 08, Task 09, Task 10, Task 11, Task 12 |
-| 14 | [TTLock provider and credential encryption (Phase 2)](2026-11-01-smart-locker-mvp/task-14-ttlock-provider.md) | Phase 2 | Task 01, Task 02, Task 03 |
+| 14 | [Light, dark, and system appearance](2026-11-01-smart-locker-mvp/task-14-dark-mode.md) | Phase 1.5 | Task 13 |
+| 15 | [TTLock provider and credential encryption (Phase 2)](2026-11-01-smart-locker-mvp/task-15-ttlock-provider.md) | Phase 2 | Task 01, Task 02, Task 03 |
 
 ## Dependency order
 
@@ -66,8 +68,8 @@ Task 01 -> Task 02 -> Task 04 -> Task 05 -> Task 06 -> Task 07 -> Task 08 -> Tas
 Task 01 -> Task 03 -> Task 05
 Task 02 -> Task 05 -> Task 10 -> Task 12
 Task 05 -> Task 11 (also needs Task 09)
-Tasks 01-12 -> Task 13
-Tasks 01-03 -> Task 14 (Phase 2; also gated on vendor credentials)
+Tasks 01-12 -> Task 13 -> Task 14 (appearance, before the pilot invite)
+Tasks 01-03 -> Task 15 (Phase 2; also gated on vendor credentials; runs after Task 14)
 ```
 
 Tasks 02, 03, and 10 can run in parallel once Task 01 lands. Tasks 06 and 10 can run in parallel once Task 05 lands. Everything else is sequential because it consumes the previous task's interfaces.
@@ -76,5 +78,6 @@ Tasks 02, 03, and 10 can run in parallel once Task 01 lands. Tasks 06 and 10 can
 
 - Load `superpowers:test-driven-development` before Task 01. Every step is already ordered RED then GREEN.
 - One task per branch or worktree is fine; each task ends in a commit. If splitting work across people, respect the dependency column above.
-- Phase 1 ships on `MockLockProvider`; do not start Task 14 until a TTLock developer account and a test lock exist.
+- Complete Task 14 (appearance) before inviting pilot residents.
+- Phase 1 ships on `MockLockProvider`; do not start Task 15 until a TTLock developer account and a test lock exist.
 - Run each task's final verification command and read its output before claiming the task complete.

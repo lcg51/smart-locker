@@ -113,7 +113,7 @@ export function getLockProvider(): Promise<LockProvider> {
 }
 ```
 
-Create `tests/locks/factory.test.ts` asserting `await createLockProvider({ LOCK_PROVIDER: "mock" })` implements the contract and `ttlock` rejects with `ttlock provider is not configured yet` until Task 14.
+Create `tests/locks/factory.test.ts` asserting `await createLockProvider({ LOCK_PROVIDER: "mock" })` implements the contract and `ttlock` rejects with `ttlock provider is not configured yet` until Task 15.
 
 - [ ] **Step 6: Run the tests to verify they pass**
 

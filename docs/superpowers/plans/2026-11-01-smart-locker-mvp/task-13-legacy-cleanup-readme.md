@@ -50,7 +50,7 @@ Document: what the product is, the Spain pilot, prerequisites (Node 22, pnpm, Do
 Create `docs/pilot-setup-guide.md` for the person running the Spain pilot, covering:
 
 1. **Hardware:** procure CE-marked locks compatible with the chosen vendor and one gateway per apartment; record each lock's vendor id.
-2. **Vendor credentials:** create the vendor developer account, then run `pnpm tsx scripts/seed-vendor-credential.ts` with `TTLOCK_ACCESS_TOKEN` and `CREDENTIAL_ENCRYPTION_KEY` once Task 14 lands. Until then keep `LOCK_PROVIDER=mock`.
+2. **Vendor credentials:** create the vendor developer account, then run `pnpm tsx scripts/seed-vendor-credential.ts` with `TTLOCK_ACCESS_TOKEN` and `CREDENTIAL_ENCRYPTION_KEY` once Task 15 lands. Until then keep `LOCK_PROVIDER=mock`.
 3. **Provision an apartment:** `pnpm provision --email resident@example.com --gateway gw-001 --locker "Kitchen:ttlock:12345"`; confirm the allowlist entry and locker rows.
 4. **Deploy:** EU-region Postgres, `pnpm db:deploy`, then set `APP_URL`, `EMAIL_FROM`, and `RESEND_API_KEY` for the pilot domain.
 5. **Resident acceptance:** the resident opens the magic link, confirms each locker on `/onboarding`, unlocks and locks once, and shares a link with a colleague.

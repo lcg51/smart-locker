@@ -16,7 +16,7 @@ Commands that touch the pilot database require `DATABASE_URL` to point at that d
 
 - Create the lock vendor's developer account and obtain API credentials.
 - Phase 1 uses `LOCK_PROVIDER=mock`; do not point the pilot at real hardware until Phase 2 is complete.
-- When Task 14 lands, run:
+- When Task 15 lands, run:
 
 ```bash
 pnpm tsx scripts/seed-vendor-credential.ts
@@ -33,7 +33,7 @@ with `TTLOCK_ACCESS_TOKEN` and `CREDENTIAL_ENCRYPTION_KEY` set. The script does 
 - Verify the Resend sending domain and add the required DNS records before inviting residents.
 - Configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` if the app runs more than one instance; otherwise rate limits are per-process.
 - Put a trusted proxy in front of the app so the first `x-forwarded-for` entry is the real client IP. The share limiter keys on that value.
-- Keep `LOCK_PROVIDER=mock` until hardware and Task 14 are ready.
+- Keep `LOCK_PROVIDER=mock` until hardware and Task 15 are ready.
 
 ## 4. Provision an apartment
 
@@ -87,7 +87,7 @@ If the pilot must be paused:
 - Take the app offline or block mutations at the proxy. There is no operator-wide read-only switch, and mock mode still simulates successful lock/unlock commands.
 - Setting `LOCK_PROVIDER=mock` only prevents real vendor calls. It does not pause the app; use it alongside taking the app offline if hardware must be isolated.
 - Revoke active share grants from each owner's locker page. There is no bulk revoke control, so if links must stop immediately, take the app offline and remove guest access at the network layer.
-- Rotate vendor credentials and update the encrypted credential record once Task 14 is available.
+- Rotate vendor credentials and update the encrypted credential record once Task 15 is available.
 - Tell residents the service is unavailable rather than implying the app is read-only.
 - Preserve database backups according to the pilot's data-retention policy. Account deletion is still available and is permanent.
 

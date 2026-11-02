@@ -57,6 +57,9 @@ These are failures even if the app technically works:
 
 - Existing stack stays: Next.js 16 App Router, React 19, TypeScript, Tailwind v4,
   shadcn/ui.
+- Appearance offers Light, Dark, and System. System is the default and follows
+  the device's `prefers-color-scheme`; the choice is stored per browser, not on
+  the account.
 - One resident per account; lockers belong to that account. The current
   Room/Locker split collapses into a single `Locker` with a display name.
 - The lock vendor must offer a cloud API for remote unlock plus device state and
@@ -240,6 +243,22 @@ notification channel. Instead:
 
 Web push is post-MVP.
 
+### Appearance
+
+The resident and guest surfaces render light or dark from one set of
+CSS-variable tokens in `app/globals.css`; components never hard-code colors.
+
+- **Default:** System, so a new browser follows the device's light/dark
+  preference. There must be no flash of the wrong theme on first paint.
+- **Override:** a signed-in resident chooses Light, Dark, or System under
+  Settings → Appearance. The preference is stored in that browser's
+  `localStorage`, so it does not follow the account to another device.
+- **Guest pages:** follow the device preference and show no theme control; the
+  guest surface stays minimal.
+- **Implementation:** a `next-themes` class on `<html>`, with `color-scheme`
+  set so native controls and scrollbars match. Dialogs, the PIN pad, and the
+  guest share page inherit the active theme.
+
 ### API surface
 
 Server actions handle app mutations (confirm/rename locker, lock, unlock,
@@ -300,6 +319,9 @@ resolving immediately because their grants are gone.
 - **End-to-end** (Playwright, mock provider): resident signs in, confirms a
   pre-provisioned locker, unlocks it, creates a share, guest redeems it, owner
   revokes it, guest is denied.
+- **Appearance**: Playwright verifies the Settings choice applies immediately
+  and survives a reload, and that a fresh browser with a dark
+  `prefers-color-scheme` renders auth and guest pages dark.
 - **Security checks**: expired and revoked links, replayed links, token
   enumeration, cross-user locker access, guest page leakage.
 
@@ -358,6 +380,9 @@ Success signals for the MVP:
 - Guest unlocks are server-side remote unlocks; no per-guest vendor e-keys in
   the MVP, so revoking the grant is sufficient.
 - One resident per account; no building admin in the MVP.
+- Appearance defaults to the device preference; residents can override to
+  Light, Dark, or System in Settings, per browser. Guest pages follow the device
+  setting and show no theme control.
 - Invite-only is enforced by an `AllowedEmail` allowlist checked at sign-in.
 - The PIN stops being an authentication factor.
 - The old `Room` concept is folded into `Locker`.

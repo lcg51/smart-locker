@@ -1,4 +1,4 @@
-# Task 14: TTLock provider and credential encryption (Phase 2)
+# Task 15: TTLock provider and credential encryption (Phase 2)
 
 > Part of the [Smart Locker MVP implementation plan](../2026-11-01-smart-locker-mvp.md).
 > Spec: [Smart Locker MVP — Design](../../specs/2026-11-01-smart-locker-mvp-design.md).

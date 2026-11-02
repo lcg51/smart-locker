@@ -102,7 +102,7 @@ If Upstash is not configured, redemption uses an in-memory limiter, which is sui
 
 `LOCK_PROVIDER=mock` is the Phase 1 default. It supports provisioning, lock, unlock, and state reads without hardware, and auto-registers unknown lock IDs so seeded fixtures work.
 
-`LOCK_PROVIDER=ttlock` is scaffolded for Phase 2. Do not enable it for the pilot until the TTLock developer account, gateway, test lock, credential encryption, and provider tests from Task 14 are complete. Until then, keep `LOCK_PROVIDER=mock`.
+`LOCK_PROVIDER=ttlock` is scaffolded for Phase 2. Do not enable it for the pilot until the TTLock developer account, gateway, test lock, credential encryption, and provider tests from Task 15 are complete. Until then, keep `LOCK_PROVIDER=mock`.
 
 ## Security and privacy model
 
