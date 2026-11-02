@@ -7,13 +7,14 @@ import { X } from "lucide-react"
 interface PinPadProps {
   onComplete: (pin: string) => void
   maxLength?: number
+  disabled?: boolean
 }
 
-export function PinPad({ onComplete, maxLength = 4 }: PinPadProps) {
+export function PinPad({ onComplete, maxLength = 4, disabled = false }: PinPadProps) {
   const [pin, setPin] = useState("")
 
   const handleNumberClick = (num: string) => {
-    if (pin.length < maxLength) {
+    if (!disabled && pin.length < maxLength) {
       const newPin = pin + num
       setPin(newPin)
       if (newPin.length === maxLength) {
@@ -24,7 +25,7 @@ export function PinPad({ onComplete, maxLength = 4 }: PinPadProps) {
   }
 
   const handleDelete = () => {
-    setPin(pin.slice(0, -1))
+    if (!disabled) setPin(pin.slice(0, -1))
   }
 
   const numbers = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
@@ -52,12 +53,13 @@ export function PinPad({ onComplete, maxLength = 4 }: PinPadProps) {
             size="lg"
             onClick={() => handleNumberClick(num)}
             className="h-16 w-16 text-xl font-semibold"
+            disabled={disabled}
           >
             {num}
           </Button>
         ))}
         <div className="col-start-3">
-          <Button variant="ghost" size="lg" onClick={handleDelete} className="h-16 w-16" disabled={pin.length === 0}>
+          <Button aria-label="Delete last digit" variant="ghost" size="lg" onClick={handleDelete} className="h-16 w-16" disabled={disabled || pin.length === 0}>
             <X className="h-6 w-6" />
           </Button>
         </div>

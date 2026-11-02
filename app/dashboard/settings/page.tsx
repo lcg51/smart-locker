@@ -1,9 +1,9 @@
-import { Bell, LogOut, ShieldCheck, UserRound } from "lucide-react"
+import { Bell, LockKeyhole, LogOut, ShieldCheck, UserRound } from "lucide-react"
 import { DeleteAccountDialog } from "@/components/delete-account-dialog"
 import { GuestUnlockEmailToggle } from "@/components/guest-unlock-email-toggle"
-import { Button } from "@/components/ui/button"
+import { PinSettings } from "@/components/pin-settings"
+import { SignOutButton } from "@/components/sign-out-button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { logout } from "@/app/actions/auth"
 import { requireUser } from "@/lib/auth/session"
 import { prisma } from "@/lib/db"
 
@@ -36,12 +36,10 @@ export default async function SettingsPage() {
               <p className="text-sm text-muted-foreground">Email address</p>
               <p className="mt-1 break-all font-medium">{user.email}</p>
             </div>
-            <form action={logout}>
-              <Button className="min-h-11 w-full sm:w-auto" type="submit" variant="outline">
-                <LogOut aria-hidden="true" className="size-4" />
-                Sign out
-              </Button>
-            </form>
+            <SignOutButton className="min-h-11 w-full sm:w-auto" variant="outline">
+              <LogOut aria-hidden="true" className="size-4" />
+              Sign out
+            </SignOutButton>
           </CardContent>
         </Card>
 
@@ -55,6 +53,19 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent>
             <GuestUnlockEmailToggle userId={user.id} initialEnabled={preferences.guestUnlockEmails} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <LockKeyhole aria-hidden="true" className="size-5" />
+              Device lock
+            </CardTitle>
+            <CardDescription>Use an optional PIN to quickly reopen the app on this browser.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PinSettings />
           </CardContent>
         </Card>
 
