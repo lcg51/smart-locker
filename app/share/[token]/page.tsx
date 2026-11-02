@@ -1,17 +1,10 @@
 import type { Metadata } from "next"
 import { Clock3, KeyRound, PackageCheck } from "lucide-react"
 import { GuestUnlock } from "@/components/guest-unlock"
+import { formatShareExpiry } from "@/lib/shares/presentation"
 import { resolveShareToken } from "@/lib/shares/redeem"
 
 export const metadata: Metadata = { referrer: "no-referrer" }
-
-function formatExpiry(date: Date): string {
-  return new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZoneName: "short",
-  }).format(date)
-}
 
 export default async function GuestSharePage({
   params,
@@ -47,7 +40,7 @@ export default async function GuestSharePage({
             <div className="mb-6 flex items-start gap-3 rounded-lg bg-muted/70 p-4">
               <Clock3 aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
-                This link is available until <time dateTime={result.grant.expiresAt.toISOString()}>{formatExpiry(result.grant.expiresAt)}</time>.
+                This link is available until <time dateTime={result.grant.expiresAt.toISOString()}>{formatShareExpiry(result.grant.expiresAt)}</time>.
               </p>
             </div>
 
