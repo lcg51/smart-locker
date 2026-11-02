@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest"
 import { prisma } from "@/lib/db"
 import { provisionApartment } from "@/lib/ops/provision"
 import { confirmLocker, renameLocker } from "@/lib/lockers/service"
-import { canConfirmLockerName } from "@/lib/lockers/onboarding"
+import { canConfirmLockerName, canEditLockerName } from "@/lib/lockers/onboarding"
 import { resetDb } from "@/tests/helpers/db"
 
 beforeEach(resetDb)
@@ -18,6 +18,11 @@ async function seed() {
 }
 
 describe("locker onboarding operations", () => {
+  it("blocks locker name edits while a save or confirmation is pending", () => {
+    expect(canEditLockerName(false)).toBe(true)
+    expect(canEditLockerName(true)).toBe(false)
+  })
+
   it("only allows confirmation after the current name has been saved", () => {
     expect(canConfirmLockerName("Kitchen", "Kitchen")).toBe(true)
     expect(canConfirmLockerName("  Kitchen  ", "Kitchen")).toBe(true)

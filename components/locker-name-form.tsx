@@ -6,7 +6,7 @@ import { Check, Save } from "lucide-react"
 import { confirmLockerAction, renameLockerAction } from "@/app/actions/lockers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { canConfirmLockerName } from "@/lib/lockers/onboarding"
+import { canConfirmLockerName, canEditLockerName } from "@/lib/lockers/onboarding"
 
 export function LockerNameForm({
   lockerId,
@@ -65,6 +65,7 @@ export function LockerNameForm({
             id={`locker-name-${lockerId}`}
             maxLength={40}
             name="name"
+            disabled={!canEditLockerName(isPending)}
             onChange={(event) => setName(event.currentTarget.value)}
             required
             value={name}
