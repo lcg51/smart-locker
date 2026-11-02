@@ -1,214 +1,81 @@
-"use client"
-
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { storage } from "@/lib/storage"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Bell, LogOut, ShieldCheck, UserRound } from "lucide-react"
+import { DeleteAccountDialog } from "@/components/delete-account-dialog"
+import { GuestUnlockEmailToggle } from "@/components/guest-unlock-email-toggle"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useToast } from "@/hooks/use-toast"
-import { Lock, Trash2, Info } from "lucide-react"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { logout } from "@/app/actions/auth"
+import { requireUser } from "@/lib/auth/session"
+import { prisma } from "@/lib/db"
 
-export default function SettingsPage() {
-  const router = useRouter()
-  const { toast } = useToast()
-  const [currentPin, setCurrentPin] = useState("")
-  const [newPin, setNewPin] = useState("")
-  const [confirmPin, setConfirmPin] = useState("")
-  const [isChangingPin, setIsChangingPin] = useState(false)
-
-  const handleChangePIN = () => {
-    const settings = storage.getSettings()
-
-    if (currentPin !== settings.pin) {
-      toast({
-        title: "Error",
-        description: "Current PIN is incorrect",
-        variant: "destructive",
-      })
-      return
-    }
-
-    if (newPin.length !== 4 || !/^\d+$/.test(newPin)) {
-      toast({
-        title: "Error",
-        description: "New PIN must be 4 digits",
-        variant: "destructive",
-      })
-      return
-    }
-
-    if (newPin !== confirmPin) {
-      toast({
-        title: "Error",
-        description: "New PINs do not match",
-        variant: "destructive",
-      })
-      return
-    }
-
-    settings.pin = newPin
-    storage.saveSettings(settings)
-
-    toast({
-      title: "Success",
-      description: "PIN changed successfully",
-    })
-
-    setCurrentPin("")
-    setNewPin("")
-    setConfirmPin("")
-    setIsChangingPin(false)
-  }
-
-  const handleClearData = () => {
-    if (typeof window !== "undefined") {
-      localStorage.clear()
-      sessionStorage.clear()
-      router.push("/auth")
-      toast({
-        title: "Data Cleared",
-        description: "All app data has been cleared",
-      })
-    }
-  }
+export default async function SettingsPage() {
+  const user = await requireUser()
+  const preferences = await prisma.user.findUniqueOrThrow({
+    where: { id: user.id },
+    select: { guestUnlockEmails: true },
+  })
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Settings</h1>
-          <p className="text-muted-foreground">Manage your app preferences and security</p>
-        </div>
+    <main className="container mx-auto max-w-3xl px-4 py-8 sm:py-10">
+      <header className="mb-8">
+        <p className="text-sm font-medium text-muted-foreground">Account</p>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight">Settings</h1>
+        <p className="mt-2 text-muted-foreground">Manage account notifications and security.</p>
+      </header>
 
-        <div className="space-y-6">
-          {/* PIN Management */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lock className="h-5 w-5" />
-                PIN Security
-              </CardTitle>
-              <CardDescription>Change your PIN to secure access to your lockers</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {!isChangingPin ? (
-                <Button onClick={() => setIsChangingPin(true)}>Change PIN</Button>
-              ) : (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="current-pin">Current PIN</Label>
-                    <Input
-                      id="current-pin"
-                      type="password"
-                      maxLength={4}
-                      value={currentPin}
-                      onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, ""))}
-                      placeholder="Enter current PIN"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="new-pin">New PIN</Label>
-                    <Input
-                      id="new-pin"
-                      type="password"
-                      maxLength={4}
-                      value={newPin}
-                      onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ""))}
-                      placeholder="Enter new 4-digit PIN"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-pin">Confirm New PIN</Label>
-                    <Input
-                      id="confirm-pin"
-                      type="password"
-                      maxLength={4}
-                      value={confirmPin}
-                      onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))}
-                      placeholder="Re-enter new PIN"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button onClick={handleChangePIN}>Save PIN</Button>
-                    <Button variant="outline" onClick={() => setIsChangingPin(false)}>
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+      <div className="space-y-5">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserRound aria-hidden="true" className="size-5" />
+              Account
+            </CardTitle>
+            <CardDescription>Your sign-in email and session controls.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-sm text-muted-foreground">Email address</p>
+              <p className="mt-1 break-all font-medium">{user.email}</p>
+            </div>
+            <form action={logout}>
+              <Button className="min-h-11 w-full sm:w-auto" type="submit" variant="outline">
+                <LogOut aria-hidden="true" className="size-4" />
+                Sign out
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
 
-          {/* App Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Info className="h-5 w-5" />
-                App Information
-              </CardTitle>
-              <CardDescription>Details about your Smart Locker app</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Version</span>
-                <span className="font-medium">1.0.0</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Rooms Configured</span>
-                <span className="font-medium">{storage.getRooms().length}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Access Logs</span>
-                <span className="font-medium">{storage.getAccessLogs().length}</span>
-              </div>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell aria-hidden="true" className="size-5" />
+              Notifications
+            </CardTitle>
+            <CardDescription>Choose whether we email you about guest access to your lockers.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <GuestUnlockEmailToggle userId={user.id} initialEnabled={preferences.guestUnlockEmails} />
+          </CardContent>
+        </Card>
 
-          {/* Data Management */}
-          <Card className="border-destructive/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-destructive">
-                <Trash2 className="h-5 w-5" />
-                Danger Zone
-              </CardTitle>
-              <CardDescription>Irreversible actions that affect your data</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive">Clear All Data</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete all your rooms, access logs, and
-                      settings.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleClearData}>Clear All Data</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-    </div>
+        <Card className="border-destructive/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <ShieldCheck aria-hidden="true" className="size-5" />
+              Danger zone
+            </CardTitle>
+            <CardDescription>
+              Permanently remove your Smart Locker account and the data associated with it.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="max-w-xl text-sm text-muted-foreground">
+              Your lockers, share links, access history, sign-in sessions, and invite entry will be deleted.
+            </p>
+            <DeleteAccountDialog />
+          </CardContent>
+        </Card>
+      </div>
+    </main>
   )
 }
