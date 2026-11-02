@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
+import { signOut } from "@/auth"
 import { requireUser } from "@/lib/auth/session"
+import { deleteAccount } from "@/lib/account/delete"
 import { prisma } from "@/lib/db"
 
 const guestUnlockEmailsSchema = z.object({
@@ -21,4 +23,10 @@ export async function setGuestUnlockEmails(userId: string, enabled: boolean): Pr
     data: { guestUnlockEmails: parsed.data.enabled },
   })
   revalidatePath("/dashboard/settings")
+}
+
+export async function deleteAccountAction(): Promise<void> {
+  const user = await requireUser()
+  await deleteAccount(user.id)
+  await signOut({ redirectTo: "/auth" })
 }

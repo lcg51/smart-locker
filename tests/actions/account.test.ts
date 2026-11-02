@@ -6,6 +6,7 @@ import { resetDb } from "@/tests/helpers/db"
 
 vi.mock("@/lib/auth/session", () => ({ requireUser: vi.fn() }))
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }))
+vi.mock("@/auth", () => ({ signOut: vi.fn() }))
 
 beforeEach(async () => {
   vi.mocked(requireUser).mockReset()
