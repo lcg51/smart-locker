@@ -85,7 +85,7 @@ export default async function SettingsPage() {
 
         <Card className="border-destructive/50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
+            <CardTitle className="flex items-center gap-2 text-destructive-text">
               <ShieldCheck aria-hidden="true" className="size-5" />
               Danger zone
             </CardTitle>

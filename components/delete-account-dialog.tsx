@@ -44,14 +44,14 @@ export function DeleteAccountDialog() {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
-            <AlertTriangle aria-hidden="true" className="size-5 text-destructive" />
+            <AlertTriangle aria-hidden="true" className="size-5 text-destructive-text" />
             Delete your account permanently?
           </AlertDialogTitle>
           <AlertDialogDescription>
             This permanently deletes your account, lockers, active share links, access history, and sign-in sessions. This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        {error && <p aria-live="polite" className="text-sm text-destructive" role="alert">{error}</p>}
+        {error && <p aria-live="polite" className="text-sm text-destructive-text" role="alert">{error}</p>}
         <AlertDialogFooter>
           <AlertDialogCancel className="min-h-11" disabled={isPending}>Keep my account</AlertDialogCancel>
           <AlertDialogAction

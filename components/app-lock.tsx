@@ -86,7 +86,7 @@ export function AppLock({ children }: { children: ReactNode }) {
         </p>
 
         {lockState === "invalid" ? (
-          <p className="mt-6 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">
+          <p className="mt-6 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive-text" role="alert">
             This device’s PIN data is unavailable. Sign out to clear the device lock.
           </p>
         ) : lockState === "storage-unavailable" ? (
@@ -102,7 +102,7 @@ export function AppLock({ children }: { children: ReactNode }) {
           <div className="mt-6">
             <PinPad disabled={isVerifying} onComplete={handlePinComplete} />
             {isVerifying && <p aria-live="polite" className="mt-4 text-sm text-muted-foreground" role="status">Checking PIN…</p>}
-            {error && <p aria-live="polite" className="mt-4 text-sm text-destructive" role="alert">{error}</p>}
+            {error && <p aria-live="polite" className="mt-4 text-sm text-destructive-text" role="alert">{error}</p>}
           </div>
         )}
 

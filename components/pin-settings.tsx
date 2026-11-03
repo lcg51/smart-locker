@@ -138,7 +138,7 @@ export function PinSettings() {
         </div>
       )}
 
-      {error && <p aria-live="polite" className="text-sm text-destructive" role="alert">{error}</p>}
+      {error && <p aria-live="polite" className="text-sm text-destructive-text" role="alert">{error}</p>}
       {message && step === "idle" && <p aria-live="polite" className="text-sm text-muted-foreground" role="status">{message}</p>}
     </div>
   )

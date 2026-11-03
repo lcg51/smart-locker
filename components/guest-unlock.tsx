@@ -76,7 +76,7 @@ export function GuestUnlock({ token }: { token: string }) {
         </div>
       )}
 
-      {error && <p aria-live="polite" className="text-sm text-destructive" role="alert">{error}</p>}
+      {error && <p aria-live="polite" className="text-sm text-destructive-text" role="alert">{error}</p>}
 
       <Button
         className="min-h-12 w-full text-base"

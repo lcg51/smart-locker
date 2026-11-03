@@ -118,7 +118,7 @@ export function ShareDialog({ lockerId, lockerName }: { lockerId: string; locker
               <p className="text-sm text-muted-foreground">Choose from 1 to 50 unlocks.</p>
             </div>
 
-            {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
+            {error && <p className="text-sm text-destructive-text" role="alert">{error}</p>}
 
             <Button className="min-h-11 w-full" disabled={isPending} type="submit">
               {isPending ? "Creating link…" : "Create share link"}

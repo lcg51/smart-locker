@@ -95,7 +95,7 @@ export function LockerNameForm({
           {!canConfirmLockerName(name, savedName) && (
             <p className="text-sm text-muted-foreground">Save the locker name before confirming it.</p>
           )}
-          {confirmMessage && <p aria-live="polite" className="text-sm text-destructive" role="alert">{confirmMessage}</p>}
+          {confirmMessage && <p aria-live="polite" className="text-sm text-destructive-text" role="alert">{confirmMessage}</p>}
         </div>
       )}
     </div>
