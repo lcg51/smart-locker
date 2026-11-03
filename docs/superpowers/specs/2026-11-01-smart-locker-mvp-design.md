@@ -362,7 +362,8 @@ Success signals for the MVP:
 - ORM (Prisma or Drizzle) and Postgres host.
 - Email provider for magic links and guest-unlock notifications.
 - Rate-limiting implementation (Upstash Redis or Postgres-backed).
-- Auto-relock duration per vendor and how it is surfaced to the guest.
+- Auto-relock duration per vendor; the pilot fixes this at 30 seconds for guest
+  unlocks and leaves owner unlocks manual.
 - Whether the optional local PIN ships in the first pilot build or the second.
 - Whether one gateway can serve several lockers in the same apartment.
 - Whether the pilot UI ships in Spanish, English, or both. The plan ships
@@ -379,6 +380,8 @@ Success signals for the MVP:
 - Guest access needs no account; the link is the credential.
 - Guest unlocks are server-side remote unlocks; no per-guest vendor e-keys in
   the MVP, so revoking the grant is sufficient.
+- Guest unlocks auto-relock after 30 seconds. Owner unlocks remain manual; the
+  resident has an explicit lock control.
 - One resident per account; no building admin in the MVP.
 - Appearance defaults to the device preference; residents can override to
   Light, Dark, or System in Settings, per browser. Guest pages follow the device
