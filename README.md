@@ -12,6 +12,7 @@ The MVP runs on a mock lock provider so the product flow can be built and tested
 - Expiring, use-limited share links that guests redeem without signing in.
 - Owner activity history and optional guest-unlock email notifications.
 - Account settings, guest-email preference, and hard account deletion.
+- Light, dark, or system appearance, defaulting to the device preference and chosen in Settings.
 - Optional local device PIN as a convenience lock; it is not authentication.
 - End-to-end share-flow coverage with Playwright.
 

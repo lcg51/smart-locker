@@ -1,8 +1,9 @@
 import type React from "react"
 import type { Metadata } from "next"
 import "./globals.css"
-import { Toaster } from "@/components/ui/toaster"
 import { SafeAnalytics } from "@/components/safe-analytics"
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
   title: "Smart Locker",
@@ -32,11 +33,13 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
-        {children}
-        <Toaster />
-        <SafeAnalytics />
+        <ThemeProvider>
+          {children}
+          <Toaster />
+          <SafeAnalytics />
+        </ThemeProvider>
       </body>
     </html>
   )

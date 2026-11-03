@@ -71,11 +71,13 @@ Ask the resident to:
 3. Unlock and lock each locker once, confirming battery and online state.
 4. Create a share link and send it to a colleague or second phone.
 5. Open the activity page and confirm the events appear.
+6. Open Settings → Appearance, switch to Dark, reload, and confirm it persists; then switch back to System.
 
 ## 6. Guest check
 
 - Open the share link in iPhone Safari, without installing anything.
 - Confirm the page shows only the locker name, guest label, and expiry.
+- With the phone in dark mode, confirm the page is dark and readable and offers no theme control.
 - Tap **Unlock locker** and confirm the 30-second relock countdown appears.
 - Confirm the owner receives the guest-unlock email if notifications are enabled.
 - Revoke the link from the owner's locker page and confirm the guest page shows the generic unavailable message after reload.

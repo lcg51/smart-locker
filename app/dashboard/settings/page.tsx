@@ -1,4 +1,5 @@
-import { Bell, LockKeyhole, LogOut, ShieldCheck, UserRound } from "lucide-react"
+import { Bell, LockKeyhole, LogOut, ShieldCheck, SunMoon, UserRound } from "lucide-react"
+import { AppearanceSettings } from "@/components/appearance-settings"
 import { DeleteAccountDialog } from "@/components/delete-account-dialog"
 import { GuestUnlockEmailToggle } from "@/components/guest-unlock-email-toggle"
 import { PinSettings } from "@/components/pin-settings"
@@ -53,6 +54,19 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent>
             <GuestUnlockEmailToggle userId={user.id} initialEnabled={preferences.guestUnlockEmails} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <SunMoon aria-hidden="true" className="size-5" />
+              Appearance
+            </CardTitle>
+            <CardDescription>Choose a theme for this browser, or match your device.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AppearanceSettings />
           </CardContent>
         </Card>
 
