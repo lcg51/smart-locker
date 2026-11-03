@@ -49,7 +49,7 @@ export function ActiveShares({ grants }: { grants: ActiveShareGrant[] }) {
 
   return (
     <div className="space-y-3">
-      {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
+      {error && <p className="text-sm text-destructive-text" role="alert">{error}</p>}
       {grants.map((grant) => (
         <article className="flex flex-col gap-4 rounded-lg border bg-card p-4 sm:flex-row sm:items-center sm:justify-between" key={grant.id}>
           <div className="min-w-0 space-y-2">

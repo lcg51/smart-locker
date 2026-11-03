@@ -1,4 +1,5 @@
-import { Bell, LockKeyhole, LogOut, ShieldCheck, UserRound } from "lucide-react"
+import { Bell, LockKeyhole, LogOut, ShieldCheck, SunMoon, UserRound } from "lucide-react"
+import { AppearanceSettings } from "@/components/appearance-settings"
 import { DeleteAccountDialog } from "@/components/delete-account-dialog"
 import { GuestUnlockEmailToggle } from "@/components/guest-unlock-email-toggle"
 import { PinSettings } from "@/components/pin-settings"
@@ -59,6 +60,19 @@ export default async function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
+              <SunMoon aria-hidden="true" className="size-5" />
+              Appearance
+            </CardTitle>
+            <CardDescription>Choose a theme for this browser, or match your device.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AppearanceSettings />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
               <LockKeyhole aria-hidden="true" className="size-5" />
               Device lock
             </CardTitle>
@@ -71,7 +85,7 @@ export default async function SettingsPage() {
 
         <Card className="border-destructive/50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
+            <CardTitle className="flex items-center gap-2 text-destructive-text">
               <ShieldCheck aria-hidden="true" className="size-5" />
               Danger zone
             </CardTitle>

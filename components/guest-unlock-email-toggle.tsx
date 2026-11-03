@@ -41,7 +41,7 @@ export function GuestUnlockEmailToggle({
           Email me when a guest unlocks one of my lockers.
         </p>
         {error ? (
-          <p aria-live="polite" className="text-sm text-destructive" role="alert">{error}</p>
+          <p aria-live="polite" className="text-sm text-destructive-text" role="alert">{error}</p>
         ) : saved ? (
           <p aria-live="polite" className="text-sm text-muted-foreground" role="status">Preference saved.</p>
         ) : isPending ? (
