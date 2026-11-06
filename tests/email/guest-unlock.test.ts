@@ -102,7 +102,7 @@ describe("guest unlock email integration", () => {
       ip: "192.0.2.10",
       provider: new MockLockProvider(),
       limiter: { async check() { return true } },
-    })).resolves.toEqual({ ok: true })
+    })).resolves.toEqual({ ok: true, relockAt: expect.any(Date) })
 
     const body = JSON.parse(String(getRequest().requestInit?.body)) as { to: string[]; subject: string; text: string }
     expect(body.to).toBe("ana@example.com")
@@ -126,7 +126,7 @@ describe("guest unlock email integration", () => {
       ip: "192.0.2.11",
       provider: new MockLockProvider(),
       limiter: { async check() { return true } },
-    })).resolves.toEqual({ ok: true })
+    })).resolves.toEqual({ ok: true, relockAt: expect.any(Date) })
 
     expect(requests).toBe(0)
   })
@@ -142,7 +142,7 @@ describe("guest unlock email integration", () => {
       ip: "192.0.2.12",
       provider: new MockLockProvider(),
       limiter: { async check() { return true } },
-    })).resolves.toEqual({ ok: true })
+    })).resolves.toEqual({ ok: true, relockAt: expect.any(Date) })
 
     expect(logError).toHaveBeenCalledTimes(1)
     expect(await prisma.lockEvent.count({ where: { lockerId: locker.id, success: true } })).toBe(1)

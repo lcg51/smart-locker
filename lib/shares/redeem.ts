@@ -2,6 +2,7 @@ import { createHash } from "node:crypto"
 import { ActorType, LockAction, LockStatus } from "@prisma/client"
 import { prisma } from "@/lib/db"
 import { sendGuestUnlockEmail } from "@/lib/email"
+import { getEnv } from "@/lib/env"
 import { getLockProvider } from "@/lib/locks"
 import type { LockProvider } from "@/lib/locks/types"
 import { getRateLimiter } from "@/lib/rate-limit"
@@ -24,6 +25,7 @@ type ResolvedGrantData = {
     id: string
     name: string
     vendorLockId: string
+    relockAt: Date | null
     user: {
       email: string | null
       guestUnlockEmails: boolean
@@ -34,7 +36,7 @@ type ResolvedGrantData = {
 export type ResolvedGrant = { ok: true; grant: ResolvedGrantData }
 
 export type RedeemResult =
-  | { ok: true }
+  | { ok: true; relockAt: Date }
   | { ok: false; reason: GrantFailure["reason"] | "rate_limited" | "lock_failed" }
 
 export type RedeemInput = {
@@ -44,6 +46,7 @@ export type RedeemInput = {
   limiter?: RateLimiter
   sendEmail?: GuestUnlockEmailSender
   now?: Date
+  relockSeconds?: number
 }
 
 async function resolveShareTokenAt(token: string, now: Date): Promise<ResolvedGrant | GrantFailure> {
@@ -61,6 +64,7 @@ async function resolveShareTokenAt(token: string, now: Date): Promise<ResolvedGr
           id: true,
           name: true,
           vendorLockId: true,
+          relockAt: true,
           user: {
             select: {
               email: true,
@@ -131,9 +135,11 @@ export async function redeemShareToken({
   limiter = getRateLimiter(),
   sendEmail = sendGuestUnlockEmail,
   now = new Date(),
+  relockSeconds = getEnv().RELOCK_SECONDS,
 }: RedeemInput): Promise<RedeemResult> {
   const lockProvider = provider ?? await getLockProvider()
   const tokenHash = hashShareToken(token)
+  const relockAt = new Date(now.getTime() + relockSeconds * 1000)
 
   const ipAllowed = await limiter.check(`share:ip:${ip}`, 10, 60_000)
   if (!ipAllowed) return { ok: false, reason: "rate_limited" }
@@ -179,7 +185,7 @@ export async function redeemShareToken({
   await prisma.$transaction([
     prisma.locker.update({
       where: { id: grant.locker.id },
-      data: { status: LockStatus.UNLOCKED, lastSyncedAt: now },
+      data: { status: LockStatus.UNLOCKED, lastSyncedAt: now, relockAt },
     }),
     prisma.lockEvent.create({
       data: {
@@ -208,5 +214,5 @@ export async function redeemShareToken({
     }
   }
 
-  return { ok: true }
+  return { ok: true, relockAt }
 }

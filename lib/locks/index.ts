@@ -9,6 +9,14 @@ export async function createLockProvider(config: {
   throw new Error("ttlock provider is not configured yet")
 }
 
+const globalForLocks = globalThis as unknown as {
+  __smartLockerProvider?: Promise<LockProvider>
+}
+
 export function getLockProvider(): Promise<LockProvider> {
-  return createLockProvider(getEnv())
+  // One provider per process, shared across Next.js route and action bundles:
+  // provider-side state (notably the mock lock state) must be visible to later
+  // requests.
+  globalForLocks.__smartLockerProvider ??= createLockProvider(getEnv())
+  return globalForLocks.__smartLockerProvider
 }

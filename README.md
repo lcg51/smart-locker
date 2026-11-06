@@ -10,6 +10,7 @@ The MVP runs on a mock lock provider so the product flow can be built and tested
 - Pre-provisioned apartment lockers with confirmation, renaming, and battery/status display.
 - Remote lock/unlock through a server-side `LockProvider`.
 - Expiring, use-limited share links that guests redeem without signing in.
+- Guest unlocks relock automatically after 30 seconds; owner unlocks stay manual.
 - Owner activity history and optional guest-unlock email notifications.
 - Account settings, guest-email preference, and hard account deletion.
 - Light, dark, or system appearance, defaulting to the device preference and chosen in Settings.
@@ -95,9 +96,13 @@ The E2E suite requires port 3100 to be free. It seeds `ana@example.com` with a `
 | `CREDENTIAL_ENCRYPTION_KEY` | 64 hex characters for vendor credential encryption, Phase 2. |
 | `UPSTASH_REDIS_REST_URL` | Optional; enables distributed share-redemption rate limiting. |
 | `UPSTASH_REDIS_REST_TOKEN` | Optional; required with the Upstash URL. |
+| `RELOCK_SECONDS` | Guest relock delay in seconds; defaults to `30`. |
+| `CRON_SECRET` | Optional bearer secret for the relock cron endpoint; required in production for the fallback sweep. |
 | `E2E` | Set only in the test environment; enables `/api/test/session`. |
 
 If Upstash is not configured, redemption uses an in-memory limiter, which is suitable for a single app instance only.
+
+Guest unlocks set a server-side `relockAt` deadline. The guest page counts down to that deadline and calls the relock action when it reaches zero; the page reports the server result and never claims a relock it did not confirm. `/api/cron/relock` is a one-minute fallback for guests who close the tab before the timer fires. It requires `CRON_SECRET` and the Vercel cron configured in `vercel.json`; on plans that do not allow one-minute crons, schedule the same endpoint externally and document the achieved interval.
 
 ## Mock and TTLock providers
 

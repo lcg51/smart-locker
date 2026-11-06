@@ -13,6 +13,8 @@ const envSchema = z.object({
   CREDENTIAL_ENCRYPTION_KEY: z.string().regex(/^[0-9a-f]{64}$/).optional(),
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+  RELOCK_SECONDS: z.coerce.number().int().min(1).max(3600).default(30),
+  CRON_SECRET: z.string().min(16).optional(),
   E2E: z.enum(["1"]).optional(),
 })
 

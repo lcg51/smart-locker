@@ -44,7 +44,10 @@ export default async function GuestSharePage({
               </p>
             </div>
 
-            <GuestUnlock token={token} />
+            <GuestUnlock
+              token={token}
+              initialRelockAt={result.grant.locker.relockAt?.toISOString() ?? null}
+            />
             <p className="mt-6 text-center text-xs text-muted-foreground">No account or app needed. Keep this link private.</p>
           </>
         ) : (
