@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { Clock3, KeyRound, PackageCheck } from "lucide-react"
 import { GuestUnlock } from "@/components/guest-unlock"
 import { formatShareExpiry } from "@/lib/shares/presentation"
-import { resolveShareToken } from "@/lib/shares/redeem"
+import { resolveRelockState, resolveShareToken } from "@/lib/shares/redeem"
 
 export const metadata: Metadata = { referrer: "no-referrer" }
 
@@ -12,7 +12,11 @@ export default async function GuestSharePage({
   params: Promise<{ token: string }>
 }) {
   const { token } = await params
-  const result = await resolveShareToken(token)
+  const [result, relock] = await Promise.all([
+    resolveShareToken(token),
+    resolveRelockState(token),
+  ])
+  const pendingRelockAt = relock.relockAt?.toISOString() ?? null
 
   return (
     <main className="flex min-h-[100svh] items-center justify-center bg-muted/40 px-4 py-10 sm:px-6">
@@ -44,7 +48,10 @@ export default async function GuestSharePage({
               </p>
             </div>
 
-            <GuestUnlock token={token} />
+            <GuestUnlock
+              token={token}
+              initialRelockAt={pendingRelockAt}
+            />
             <p className="mt-6 text-center text-xs text-muted-foreground">No account or app needed. Keep this link private.</p>
           </>
         ) : (
@@ -54,6 +61,11 @@ export default async function GuestSharePage({
             </span>
             <h1 className="text-2xl font-semibold tracking-tight">This link is no longer available</h1>
             <p className="mt-2 text-sm text-muted-foreground">Ask the person who shared it with you for a new link.</p>
+            {pendingRelockAt && (
+              <div className="mt-6 text-left">
+                <GuestUnlock token={token} initialRelockAt={pendingRelockAt} relockOnly />
+              </div>
+            )}
           </div>
         )}
       </section>

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto"
 import { ActorType, LockAction, LockStatus } from "@prisma/client"
 import { prisma } from "@/lib/db"
 import { sendGuestUnlockEmail } from "@/lib/email"
+import { getEnv } from "@/lib/env"
 import { getLockProvider } from "@/lib/locks"
 import type { LockProvider } from "@/lib/locks/types"
 import { getRateLimiter } from "@/lib/rate-limit"
@@ -24,6 +25,7 @@ type ResolvedGrantData = {
     id: string
     name: string
     vendorLockId: string
+    relockAt: Date | null
     user: {
       email: string | null
       guestUnlockEmails: boolean
@@ -34,7 +36,7 @@ type ResolvedGrantData = {
 export type ResolvedGrant = { ok: true; grant: ResolvedGrantData }
 
 export type RedeemResult =
-  | { ok: true }
+  | { ok: true; relockAt: Date }
   | { ok: false; reason: GrantFailure["reason"] | "rate_limited" | "lock_failed" }
 
 export type RedeemInput = {
@@ -44,6 +46,7 @@ export type RedeemInput = {
   limiter?: RateLimiter
   sendEmail?: GuestUnlockEmailSender
   now?: Date
+  relockSeconds?: number
 }
 
 async function resolveShareTokenAt(token: string, now: Date): Promise<ResolvedGrant | GrantFailure> {
@@ -61,6 +64,7 @@ async function resolveShareTokenAt(token: string, now: Date): Promise<ResolvedGr
           id: true,
           name: true,
           vendorLockId: true,
+          relockAt: true,
           user: {
             select: {
               email: true,
@@ -94,6 +98,17 @@ export function resolveShareToken(token: string): Promise<ResolvedGrant | GrantF
   return resolveShareTokenAt(token, new Date())
 }
 
+export type RelockState = { relockAt: Date | null }
+
+export async function resolveRelockState(token: string): Promise<RelockState> {
+  const grant = await prisma.shareGrant.findUnique({
+    where: { tokenHash: hashShareToken(token) },
+    select: { locker: { select: { relockAt: true } } },
+  })
+
+  return { relockAt: grant?.locker.relockAt ?? null }
+}
+
 function hashIp(ip: string): string {
   return createHash("sha256").update(ip).digest("hex")
 }
@@ -103,6 +118,7 @@ async function releaseClaimAndRecordFailure(input: {
   lockerId: string
   ipHash: string
   errorCode: string
+  relockAt: Date
 }): Promise<void> {
   await prisma.$transaction(async (tx) => {
     await tx.$executeRaw`
@@ -110,6 +126,10 @@ async function releaseClaimAndRecordFailure(input: {
       SET "usedCount" = GREATEST("usedCount" - 1, 0)
       WHERE "id" = ${input.grantId}
     `
+    await tx.locker.updateMany({
+      where: { id: input.lockerId, relockAt: input.relockAt },
+      data: { relockAt: null },
+    })
     await tx.lockEvent.create({
       data: {
         lockerId: input.lockerId,
@@ -131,9 +151,11 @@ export async function redeemShareToken({
   limiter = getRateLimiter(),
   sendEmail = sendGuestUnlockEmail,
   now = new Date(),
+  relockSeconds = getEnv().RELOCK_SECONDS,
 }: RedeemInput): Promise<RedeemResult> {
   const lockProvider = provider ?? await getLockProvider()
   const tokenHash = hashShareToken(token)
+  const relockAt = new Date(now.getTime() + relockSeconds * 1000)
 
   const ipAllowed = await limiter.check(`share:ip:${ip}`, 10, 60_000)
   if (!ipAllowed) return { ok: false, reason: "rate_limited" }
@@ -158,6 +180,14 @@ export async function redeemShareToken({
   }
 
   const ipHash = hashIp(ip)
+
+  // Persist the deadline before the hardware changes so a crash or persistence
+  // failure after the unlock still leaves the cron a deadline to enforce.
+  await prisma.locker.update({
+    where: { id: grant.locker.id },
+    data: { relockAt },
+  })
+
   let errorCode: string | null = null
   try {
     const result = await lockProvider.unlock(grant.locker.vendorLockId)
@@ -172,6 +202,7 @@ export async function redeemShareToken({
       lockerId: grant.locker.id,
       ipHash,
       errorCode,
+      relockAt,
     })
     return { ok: false, reason: "lock_failed" }
   }
@@ -208,5 +239,5 @@ export async function redeemShareToken({
     }
   }
 
-  return { ok: true }
+  return { ok: true, relockAt }
 }

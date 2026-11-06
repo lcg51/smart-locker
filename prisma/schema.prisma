@@ -75,6 +75,7 @@ model Locker {
   status       LockStatus  @default(UNKNOWN)
   batteryLevel Int?
   lastSyncedAt DateTime?
+  relockAt     DateTime?
   confirmedAt  DateTime?
   createdAt    DateTime    @default(now())
   deletedAt    DateTime?

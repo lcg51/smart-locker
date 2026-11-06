@@ -32,7 +32,15 @@ test("owner shares a locker, guest unlocks, owner revokes", async ({ browser }) 
     await expect(guestPage.getByText("ana@example.com")).toHaveCount(0)
     await expect(guestPage.getByText("gw-e2e")).toHaveCount(0)
     await guestPage.getByRole("button", { name: "Unlock locker" }).click()
-    await expect(guestPage.getByText("relock automatically", { exact: false })).toBeVisible()
+    await expect(guestPage.getByText("Locker unlocked")).toBeVisible()
+    await expect(guestPage.getByText("Locker relocked.")).toBeVisible({ timeout: 10_000 })
+
+    const lockerId = new URL(page.url()).pathname.split("/").at(-1)
+    expect(lockerId).toBeTruthy()
+    await expect.poll(async () => {
+      const response = await owner.request.get(`/api/lockers/${lockerId}/state`)
+      return (await response.json()).status
+    }).toBe("locked")
 
     await page.getByRole("button", { name: "Revoke", exact: true }).click()
     await page.getByRole("button", { name: "Revoke link" }).click()

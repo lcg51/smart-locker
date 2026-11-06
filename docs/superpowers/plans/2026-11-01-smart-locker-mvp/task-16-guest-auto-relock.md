@@ -127,6 +127,8 @@ Create `lib/locks/relock.ts` with the two interfaces above. `relockShareToken`:
 
 `relockDueLockers` selects `relockAt: { lte: now }` and `deletedAt: null`, ordered by `relockAt`, limited to `limit ?? 50`, and calls the same lock/update path. Return the counts.
 
+Relock finalization must claim the exact deadline it saw: conditionally update the locker from that `relockAt` to null before calling the provider. A worker that loses the claim returns `{ ok: true }` without touching the locker, so a later unlock's fresh deadline is never cleared and duplicate client/cron calls produce one provider command and one success event. On failure, restore the claimed deadline only if no newer command owns the locker. Redeem persists `relockAt` before the provider unlock so a crash after the hardware call still leaves a deadline for the cron. Owner lock/unlock clears any pending guest deadline; owner commands stay manual.
+
 - [ ] **Step 6: Expose the client relock action and cron route**
 
 In `app/share/[token]/actions.ts`, update the result type so the client receives the deadline:

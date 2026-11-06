@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { prisma } from "@/lib/db"
 import { MockLockProvider } from "@/lib/locks/mock"
+import type { LockProvider } from "@/lib/locks/types"
 import { provisionApartment } from "@/lib/ops/provision"
 import { createShareGrant } from "@/lib/shares/service"
 import { redeemShareToken, resolveShareToken } from "@/lib/shares/redeem"
@@ -58,9 +59,63 @@ describe("redeemShareToken", () => {
       sendEmail: async () => true,
     })
 
-    expect(result).toEqual({ ok: true })
+    expect(result).toEqual({ ok: true, relockAt: expect.any(Date) })
     expect(await prisma.lockEvent.count({ where: { actorType: "GUEST", success: true } })).toBe(1)
     await expect(prisma.locker.findUniqueOrThrow({ where: { id: locker.id } })).resolves.toMatchObject({ status: "UNLOCKED" })
+  })
+
+  it("sets relockAt when a guest unlock succeeds", async () => {
+    const { userId, locker } = await seed()
+    const { token } = await createShareGrant({ userId, lockerId: locker.id })
+    const now = new Date("2026-11-03T10:00:00.000Z")
+
+    const result = await redeemShareToken({
+      token,
+      ip: "203.0.113.10",
+      now,
+      relockSeconds: 30,
+      provider: new MockLockProvider(),
+      limiter: allowAllLimiter(),
+    })
+
+    expect(result).toEqual({ ok: true, relockAt: new Date("2026-11-03T10:00:30.000Z") })
+    const saved = await prisma.locker.findUniqueOrThrow({ where: { id: locker.id } })
+    expect(saved.relockAt).toEqual(new Date("2026-11-03T10:00:30.000Z"))
+  })
+
+  it("persists the relock deadline before asking the provider to unlock", async () => {
+    const { userId, locker } = await seed()
+    const { token } = await createShareGrant({ userId, lockerId: locker.id })
+    const now = new Date("2026-11-03T10:00:00.000Z")
+    let observed: Date | null | undefined
+
+    const provider = {
+      async provision() {
+        return { vendorLockId: "unused" }
+      },
+      async unlock() {
+        observed = (await prisma.locker.findUniqueOrThrow({ where: { id: locker.id } })).relockAt
+        return { success: true as const }
+      },
+      async lock() {
+        return { success: true as const }
+      },
+      async getState() {
+        return { status: "locked" as const, batteryLevel: 100, online: true }
+      },
+    } satisfies LockProvider
+
+    await expect(redeemShareToken({
+      token,
+      ip: "203.0.113.10",
+      now,
+      relockSeconds: 30,
+      provider,
+      limiter: allowAllLimiter(),
+      sendEmail: async () => true,
+    })).resolves.toEqual({ ok: true, relockAt: new Date("2026-11-03T10:00:30.000Z") })
+
+    expect(observed).toEqual(new Date("2026-11-03T10:00:30.000Z"))
   })
 
   it("fails closed for expired, revoked, exhausted, and unknown links", async () => {
@@ -97,7 +152,8 @@ describe("redeemShareToken", () => {
       limiter: allowAllLimiter(),
       sendEmail: async () => true,
       now,
-    })).resolves.toEqual({ ok: true })
+      relockSeconds: 30,
+    })).resolves.toEqual({ ok: true, relockAt: new Date("2025-01-01T00:00:30.000Z") })
   })
 
   it("lets exactly one of two concurrent redemptions through a maxUses: 1 grant", async () => {
@@ -161,7 +217,7 @@ describe("redeemShareToken", () => {
       provider: new MockLockProvider(),
       limiter: allowAllLimiter(),
       sendEmail: async () => { throw new Error("mail unavailable") },
-    })).resolves.toEqual({ ok: true })
+    })).resolves.toEqual({ ok: true, relockAt: expect.any(Date) })
     expect(await prisma.lockEvent.count({ where: { lockerId: locker.id, success: true } })).toBe(1)
   })
 
@@ -175,7 +231,7 @@ describe("redeemShareToken", () => {
       provider: new MockLockProvider(),
       limiter: allowAllLimiter(),
       sendEmail: async () => false,
-    })).resolves.toEqual({ ok: true })
+    })).resolves.toEqual({ ok: true, relockAt: expect.any(Date) })
     expect(await prisma.lockEvent.count({ where: { lockerId: locker.id, success: true } })).toBe(1)
   })
 
@@ -191,7 +247,7 @@ describe("redeemShareToken", () => {
       provider: new MockLockProvider(),
       limiter: allowAllLimiter(),
       sendEmail,
-    })).resolves.toEqual({ ok: true })
+    })).resolves.toEqual({ ok: true, relockAt: expect.any(Date) })
     expect(sendEmail).not.toHaveBeenCalled()
     expect(await prisma.lockEvent.count({ where: { lockerId: locker.id, success: true } })).toBe(1)
   })

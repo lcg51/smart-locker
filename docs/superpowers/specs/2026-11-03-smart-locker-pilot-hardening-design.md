@@ -103,8 +103,13 @@ bug, not a feature request, and it is Task 16.
   due. `/api/cron/relock` calls it every minute, protected by `CRON_SECRET`.
   This catches guests who close the tab before the client timer fires.
 - A reloaded share page shows the remaining countdown if `relockAt` is still in
-  the future. It does not offer another unlock until the countdown ends.
+  the future. It does not offer another unlock until the countdown ends. This
+  works even when the link itself is exhausted, expired, or revoked: the page
+  resolves the pending deadline separately and renders relock-only status with
+  the retry action.
 - Owner unlock does not set `relockAt`; the owner has an explicit lock control.
+  Owner lock or unlock clears any pending guest deadline, so a later owner
+  command is never relocked by an older guest timer.
 - `RELOCK_SECONDS` is an env value defaulting to 30. Tests set it to 1.
 - Limitation: the client action is exact while the tab is open; the cron sweeper
   closes abandoned tabs within about a minute. QStash or a vendor-side auto-lock
