@@ -28,15 +28,17 @@ function getErrorMessage(result: Extract<GuestRedeemResult, { ok: false }>): str
 export function GuestUnlock({
   token,
   initialRelockAt = null,
+  relockOnly = false,
 }: {
   token: string
   initialRelockAt?: string | null
+  relockOnly?: boolean
 }) {
   const initialDeadline = parseDeadline(initialRelockAt)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [unlocked, setUnlocked] = useState(initialDeadline !== null)
-  const [canUnlockAgain, setCanUnlockAgain] = useState(true)
+  const [canUnlockAgain, setCanUnlockAgain] = useState(!relockOnly)
   const [relockAt, setRelockAt] = useState<number | null>(initialDeadline)
   const [secondsRemaining, setSecondsRemaining] = useState(0)
   const [measured, setMeasured] = useState(false)
@@ -122,7 +124,7 @@ export function GuestUnlock({
         <div aria-live="polite" className="rounded-lg border border-emerald-700/20 bg-emerald-50 p-4 text-emerald-950 dark:border-emerald-300/20 dark:bg-emerald-950 dark:text-emerald-50" role="status">
           <p className="flex items-center gap-2 font-medium">
             <Check aria-hidden="true" className="size-4" />
-            Locker unlocked
+            {relockOnly ? "Relocking locker" : "Locker unlocked"}
           </p>
           {relockState === "done" ? (
             <p className="mt-1 text-sm opacity-80">
@@ -156,34 +158,36 @@ export function GuestUnlock({
 
       {error && <p aria-live="polite" className="text-sm text-destructive-text" role="alert">{error}</p>}
 
-      <Button
-        className="min-h-12 w-full text-base"
-        disabled={disabled}
-        onClick={handleUnlock}
-        type="button"
-      >
-        {isPending ? (
-          <>
-            <LockKeyhole aria-hidden="true" className="size-5" />
-            Unlocking…
-          </>
-        ) : relockAt !== null ? (
-          <>
-            <LockKeyholeOpen aria-hidden="true" className="size-5" />
-            Unlocked
-          </>
-        ) : !canUnlockAgain ? (
-          <>
-            <LockKeyhole aria-hidden="true" className="size-5" />
-            {unlocked ? "No unlocks remaining" : "Link unavailable"}
-          </>
-        ) : (
-          <>
-            <LockKeyhole aria-hidden="true" className="size-5" />
-            Unlock locker
-          </>
-        )}
-      </Button>
+      {!relockOnly && (
+        <Button
+          className="min-h-12 w-full text-base"
+          disabled={disabled}
+          onClick={handleUnlock}
+          type="button"
+        >
+          {isPending ? (
+            <>
+              <LockKeyhole aria-hidden="true" className="size-5" />
+              Unlocking…
+            </>
+          ) : relockAt !== null ? (
+            <>
+              <LockKeyholeOpen aria-hidden="true" className="size-5" />
+              Unlocked
+            </>
+          ) : !canUnlockAgain ? (
+            <>
+              <LockKeyhole aria-hidden="true" className="size-5" />
+              {unlocked ? "No unlocks remaining" : "Link unavailable"}
+            </>
+          ) : (
+            <>
+              <LockKeyhole aria-hidden="true" className="size-5" />
+              Unlock locker
+            </>
+          )}
+        </Button>
+      )}
     </div>
   )
 }

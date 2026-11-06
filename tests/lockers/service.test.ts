@@ -121,6 +121,38 @@ describe("lockLockerForUser", () => {
     expect((await prisma.locker.findUniqueOrThrow({ where: { id: locker.id } })).status).toBe("LOCKED")
     expect(await prisma.lockEvent.count({ where: { lockerId: locker.id, action: "LOCK", success: true } })).toBe(1)
   })
+
+  it("clears a pending guest relock when the owner unlocks", async () => {
+    const { userId, locker } = await seed()
+    await prisma.locker.update({
+      where: { id: locker.id },
+      data: { relockAt: new Date(Date.now() + 30_000) },
+    })
+
+    await expect(unlockLockerForUser({
+      userId,
+      lockerId: locker.id,
+      provider: new MockLockProvider(),
+    })).resolves.toMatchObject({ ok: true })
+
+    expect((await prisma.locker.findUniqueOrThrow({ where: { id: locker.id } })).relockAt).toBeNull()
+  })
+
+  it("clears a pending guest relock when the owner locks", async () => {
+    const { userId, locker } = await seed()
+    await prisma.locker.update({
+      where: { id: locker.id },
+      data: { relockAt: new Date(Date.now() + 30_000) },
+    })
+
+    await expect(lockLockerForUser({
+      userId,
+      lockerId: locker.id,
+      provider: new MockLockProvider(),
+    })).resolves.toMatchObject({ ok: true })
+
+    expect((await prisma.locker.findUniqueOrThrow({ where: { id: locker.id } })).relockAt).toBeNull()
+  })
 })
 
 describe("refreshLockerState", () => {

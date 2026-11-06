@@ -33,7 +33,7 @@ with `TTLOCK_ACCESS_TOKEN` and `CREDENTIAL_ENCRYPTION_KEY` set. The script does 
 - Verify the Resend sending domain and add the required DNS records before inviting residents.
 - Configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` if the app runs more than one instance; otherwise rate limits are per-process.
 - Set `CRON_SECRET` to a random value of at least 16 characters and keep it in the deployment's secret store. The relock fallback returns `503` until it is set.
-- Confirm `/api/cron/relock` is scheduled every minute (`vercel.json`). Vercel Hobby does not allow one-minute crons; on that plan, schedule the endpoint with an external scheduler and record the actual interval in the pilot log. The fallback can relock up to one interval after a guest closes the tab.
+- Confirm `/api/cron/relock` is scheduled every minute (`vercel.json`). Vercel Hobby does not allow one-minute crons; on that plan, schedule the endpoint with an external scheduler and record the actual interval in the pilot log. The fallback runs within one scheduler interval after `relockAt` becomes due; provider or scheduler failures can delay it further.
 - Put a trusted proxy in front of the app so the first `x-forwarded-for` entry is the real client IP. The share limiter keys on that value.
 - Keep `LOCK_PROVIDER=mock` until hardware and Task 15 are ready.
 
@@ -81,7 +81,7 @@ Ask the resident to:
 - Confirm the page shows only the locker name, guest label, and expiry.
 - With the phone in dark mode, confirm the page is dark and readable and offers no theme control.
 - Tap **Unlock locker** and confirm the 30-second relock countdown appears, then wait for **Locker relocked.** and confirm the owner's locker shows **Locked**.
-- Close the guest tab during the countdown and confirm the cron fallback returns the locker to **Locked** within the scheduled interval (one minute on Vercel Pro; the configured external interval otherwise).
+- Close the guest tab during the countdown and confirm the cron fallback returns the locker to **Locked** within one scheduler interval after the deadline (one minute on Vercel Pro; the configured external interval otherwise), allowing for provider failures.
 - Confirm the owner receives the guest-unlock email if notifications are enabled.
 - Revoke the link from the owner's locker page and confirm the guest page shows the generic unavailable message after reload.
 

@@ -37,8 +37,35 @@ function failingLockProvider(): LockProvider {
   }
 }
 
-describe("relockShareToken", () => {
-  it("locks the locker, clears relockAt, and records a system lock event", async () => {
+function deferredProvider() {
+  let release!: () => void
+  let startedResolve!: () => void
+  const gate = new Promise<void>((resolve) => { release = resolve })
+  const started = new Promise<void>((resolve) => { startedResolve = resolve })
+  let calls = 0
+
+  const provider: LockProvider = {
+    async provision() {
+      return { vendorLockId: "unused" }
+    },
+    async unlock() {
+      return { success: true }
+    },
+    async lock() {
+      calls += 1
+      startedResolve()
+      await gate
+      return { success: true }
+    },
+    async getState() {
+      return { status: "unlocked", batteryLevel: 100, online: true }
+    },
+  }
+
+  return { provider, started, release, calls: () => calls }
+}
+
+describe("relockShareToken", () => {  it("locks the locker, clears relockAt, and records a system lock event", async () => {
     const { locker, token } = await seed()
     await prisma.locker.update({
       where: { id: locker.id },
@@ -93,6 +120,54 @@ describe("relockShareToken", () => {
   it("returns not_found for an unknown token", async () => {
     await expect(relockShareToken({ token: "unknown", provider: new MockLockProvider() }))
       .resolves.toEqual({ ok: false, errorCode: "not_found" })
+  })
+
+  it("does not clear a newer deadline or status when a relock finishes late", async () => {
+    const { locker, token } = await seed()
+    await prisma.locker.update({
+      where: { id: locker.id },
+      data: { relockAt: new Date("2026-11-03T10:00:30.000Z"), status: "UNLOCKED" },
+    })
+    const { provider, started, release } = deferredProvider()
+
+    const pending = relockShareToken({
+      token,
+      provider,
+      now: new Date("2026-11-03T10:00:31.000Z"),
+    })
+    await started
+
+    const newerDeadline = new Date("2026-11-03T10:02:00.000Z")
+    await prisma.locker.update({
+      where: { id: locker.id },
+      data: { relockAt: newerDeadline, status: "UNLOCKED" },
+    })
+    release()
+
+    await expect(pending).resolves.toEqual({ ok: true })
+    const saved = await prisma.locker.findUniqueOrThrow({ where: { id: locker.id } })
+    expect(saved.relockAt).toEqual(newerDeadline)
+    expect(saved.status).toBe("UNLOCKED")
+  })
+
+  it("lets only one concurrent relock call the provider and record the event", async () => {
+    const { locker, token } = await seed()
+    await prisma.locker.update({
+      where: { id: locker.id },
+      data: { relockAt: new Date("2026-11-03T10:00:30.000Z") },
+    })
+    const { provider, started, release, calls } = deferredProvider()
+
+    const first = relockShareToken({ token, provider, now: new Date("2026-11-03T10:00:31.000Z") })
+    const second = relockShareToken({ token, provider, now: new Date("2026-11-03T10:00:31.000Z") })
+    await started
+    release()
+
+    await expect(Promise.all([first, second])).resolves.toEqual([{ ok: true }, { ok: true }])
+    expect(calls()).toBe(1)
+    expect(await prisma.lockEvent.count({
+      where: { lockerId: locker.id, actorType: "SYSTEM", success: true },
+    })).toBe(1)
   })
 })
 

@@ -74,6 +74,7 @@ async function recordSuccess(
         status: statusToDbStatus(state.status),
         batteryLevel: state.batteryLevel,
         lastSyncedAt: new Date(),
+        relockAt: null,
       },
     }),
     prisma.lockEvent.create({
