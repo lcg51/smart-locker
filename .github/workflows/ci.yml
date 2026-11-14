@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [dev]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: smart
+          POSTGRES_PASSWORD: smart
+          POSTGRES_DB: smart_locker_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://smart:smart@localhost:5432/smart_locker_test
+      AUTH_SECRET: ci-test-secret-at-least-32-characters-long
+      AUTH_URL: http://localhost:3000
+      APP_URL: http://localhost:3000
+      EMAIL_FROM: no-reply@example.com
+      RESEND_API_KEY: re_test_ci
+      LOCK_PROVIDER: mock
+      RELOCK_SECONDS: "1"
+      E2E: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.16.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: cp .env.test.example .env.test
+      - run: pnpm test:db
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: smart
+          POSTGRES_PASSWORD: smart
+          POSTGRES_DB: smart_locker_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://smart:smart@localhost:5432/smart_locker_test
+      AUTH_SECRET: ci-test-secret-at-least-32-characters-long
+      AUTH_URL: http://localhost:3100
+      APP_URL: http://localhost:3100
+      EMAIL_FROM: no-reply@example.com
+      RESEND_API_KEY: re_test_ci
+      LOCK_PROVIDER: mock
+      RELOCK_SECONDS: "1"
+      E2E: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.16.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: cp .env.test.example .env.test
+      - run: pnpm test:db
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e

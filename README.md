@@ -80,6 +80,15 @@ The E2E suite requires port 3100 to be free. It seeds `ana@example.com` with a `
 
 **Test database safety:** both `pnpm test` and `pnpm test:e2e` delete data. `pnpm test` clears every application table between tests, and the E2E setup runs `prisma migrate reset`. Exported environment variables take precedence over `.env.test`, so a shell-exported `DATABASE_URL` can silently redirect those destructive operations. Run tests in a shell with no non-test `DATABASE_URL` exported. As a guard, the test helpers and E2E setup refuse to proceed unless the database name ends with `_test`.
 
+### CI
+
+Every pull request and every push to `dev` runs `.github/workflows/ci.yml`:
+
+- `verify` installs with `pnpm install --frozen-lockfile`, migrates the test database, and runs `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build`.
+- `e2e` provisions the same test database, installs Chromium, and runs `pnpm test:e2e`.
+
+CI pins Node 22 (`.nvmrc`) and pnpm 12.16.1 (`packageManager`). Both jobs run PostgreSQL 16 against `smart_locker_test`. Never add a pilot database URL to the workflow.
+
 ## Configuration
 
 | Variable | Purpose |
