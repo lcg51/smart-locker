@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { LockKeyhole } from "lucide-react"
 import { requestMagicLink } from "@/app/auth/actions"
 
@@ -40,7 +41,8 @@ export default function AuthPage() {
         </form>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          Access is available to residents invited to this pilot.
+          Access is available to residents invited to this pilot.{" "}
+          <Link className="underline underline-offset-4" href="/privacy">Privacy notice</Link>
         </p>
       </section>
     </main>

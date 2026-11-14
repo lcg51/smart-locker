@@ -13,6 +13,7 @@ The MVP runs on a mock lock provider so the product flow can be built and tested
 - Guest unlocks relock automatically after 30 seconds; owner unlocks stay manual.
 - Owner activity history and optional guest-unlock email notifications.
 - Account settings, guest-email preference, and hard account deletion.
+- Public privacy notice at `/privacy` and scheduled data retention.
 - Light, dark, or system appearance, defaulting to the device preference and chosen in Settings.
 - Optional local device PIN as a convenience lock; it is not authentication.
 - End-to-end share-flow coverage with Playwright.
@@ -99,11 +100,12 @@ CI pins Node 22 (`.nvmrc`) and pnpm 12.16.1 (`packageManager`). Both jobs run Po
 | `APP_URL` | Public app URL used to build share links. |
 | `EMAIL_FROM` | Verified Resend sender address. |
 | `RESEND_API_KEY` | Resend API key. |
+| `PRIVACY_CONTACT_EMAIL` | Monitored contact address shown in the privacy notice; required. |
 | `LOCK_PROVIDER` | `mock` (default) or `ttlock`. |
 | `TTLOCK_API_BASE` | TTLock API base URL, Phase 2. |
 | `TTLOCK_ACCESS_TOKEN` | TTLock access token, Phase 2. |
 | `CREDENTIAL_ENCRYPTION_KEY` | 64 hex characters for vendor credential encryption, Phase 2. |
-| `UPSTASH_REDIS_REST_URL` | Optional; enables distributed share-redemption rate limiting. |
+| `UPSTASH_REDIS_REST_URL` | Optional; enables distributed rate limiting for sign-in, shares, and lock commands. |
 | `UPSTASH_REDIS_REST_TOKEN` | Optional; required with the Upstash URL. |
 | `RELOCK_SECONDS` | Guest relock delay in seconds; defaults to `30`. |
 | `CRON_SECRET` | Optional bearer secret for the relock cron endpoint; required in production for the fallback sweep. |
@@ -112,6 +114,8 @@ CI pins Node 22 (`.nvmrc`) and pnpm 12.16.1 (`packageManager`). Both jobs run Po
 If Upstash is not configured, redemption uses an in-memory limiter, which is suitable for a single app instance only.
 
 Guest unlocks set a server-side `relockAt` deadline. The guest page counts down to that deadline and calls the relock action when it reaches zero; the page reports the server result and never claims a relock it did not confirm. `/api/cron/relock` is a one-minute fallback for guests who close the tab before the timer fires. It requires `CRON_SECRET` and the Vercel cron configured in `vercel.json`; on plans that do not allow one-minute crons, schedule the same endpoint externally and document the achieved interval.
+
+Retention is enforced by `/api/cron/cleanup` (daily at 03:00 UTC, also protected by `CRON_SECRET`): inactive share links and expired sessions/verification tokens are removed 30 days after they stop being usable, and lock events after 12 months. The public privacy notice is at `/privacy`; set `PRIVACY_CONTACT_EMAIL` to the monitored contact before inviting residents.
 
 ## Mock and TTLock providers
 
@@ -129,7 +133,7 @@ Guest unlocks set a server-side `relockAt` deadline. The guest page counts down 
 - **Rate limiting.** Magic-link requests are limited to 5 per 10 minutes per normalized email and 20 per 10 minutes per client IP. Share creation is limited to 10 per hour per resident and 20 active grants per locker. Owner lock/unlock commands are limited to 30 per minute per resident. Guest redemption is limited to 10 per minute per IP and 20 per minute per token.
 - **Minimal guest disclosure.** Guest pages show the locker display name, owner-provided guest label, and expiry; never the owner's email, gateway ID, vendor lock ID, or other lockers.
 - **Device PIN is not security.** The optional 4-digit PIN is a local convenience lock stored as a salted PBKDF2 hash in that browser. It is not sent to the server, does not authenticate the account, and is cleared on sign-out.
-- **Data handling.** The pilot targets Spain and EU hosting where available. The intent is GDPR/LOPDGDD compliance. Account deletion hard-deletes the user, lockers, grants, events, sessions, provider accounts, verification tokens, and allowlist entry. The MVP keeps no anonymised audit trail after deletion; retaining access history is a post-MVP policy decision.
+- **Data handling.** The pilot targets Spain and EU hosting where available. The intent is GDPR/LOPDGDD compliance. The privacy notice at `/privacy` describes the processing and rights; inactive share links, expired sessions/tokens, and old lock events are removed on the retention schedule. Account deletion hard-deletes the user, lockers, grants, events, sessions, provider accounts, verification tokens, and allowlist entry. The MVP keeps no anonymised audit trail after deletion.
 - **No sensitive data in URLs beyond the share token.** Share pages send `Referrer-Policy: no-referrer`, and analytics pageviews are suppressed on `/share/*`.
 - **Security headers.** Every response sets `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, a restrictive `Content-Security-Policy` with `frame-ancestors 'none'`, and a minimal `Permissions-Policy`. Share pages add `Cache-Control: no-store`, `X-Robots-Tag: noindex, nofollow, noarchive`, and `Referrer-Policy: no-referrer`; `/dashboard`, `/auth`, and `/onboarding` add `no-store` and `noindex`. The CSP allows inline scripts because Next.js needs them for bootstrap; a nonce-based policy is post-MVP.
 

@@ -7,6 +7,7 @@ const envSchema = z.object({
   APP_URL: z.string().url(),
   EMAIL_FROM: z.string().email(),
   RESEND_API_KEY: z.string().min(1),
+  PRIVACY_CONTACT_EMAIL: z.string().email(),
   LOCK_PROVIDER: z.enum(["mock", "ttlock"]).default("mock"),
   TTLOCK_API_BASE: z.string().url().optional(),
   TTLOCK_ACCESS_TOKEN: z.string().optional(),
