@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { prisma } from "@/lib/db"
+import { resetEnvCacheForTests } from "@/lib/env"
 import { provisionApartment } from "@/lib/ops/provision"
 import {
   getLockerForUser,
@@ -15,7 +16,11 @@ import { createInMemoryRateLimiter } from "@/lib/rate-limit"
 import type { LockProvider } from "@/lib/locks/types"
 import { resetDb } from "@/tests/helpers/db"
 
-beforeEach(resetDb)
+beforeEach(async () => {
+  vi.unstubAllEnvs()
+  resetEnvCacheForTests()
+  await resetDb()
+})
 
 async function seed() {
   const { userId } = await provisionApartment({
@@ -137,6 +142,26 @@ describe("unlockLockerForUser", () => {
     expect(await prisma.lockEvent.count({
       where: { lockerId: locker.id, actorType: "OWNER", success: true },
     })).toBe(30)
+  })
+
+  it("still locks while unlock commands are disabled", async () => {
+    const { userId, locker } = await seed()
+    const provider = new MockLockProvider()
+
+    vi.stubEnv("LOCK_COMMANDS_ENABLED", "false")
+    resetEnvCacheForTests()
+
+    await expect(unlockLockerForUser({ userId, lockerId: locker.id, provider }))
+      .resolves.toEqual({ ok: false, errorCode: "commands_disabled" })
+    await expect(lockLockerForUser({ userId, lockerId: locker.id, provider }))
+      .resolves.toMatchObject({ ok: true })
+
+    expect(await prisma.lockEvent.count({
+      where: { lockerId: locker.id, action: "UNLOCK" },
+    })).toBe(0)
+    expect(await prisma.lockEvent.count({
+      where: { lockerId: locker.id, action: "LOCK", success: true },
+    })).toBe(1)
   })
 })
 

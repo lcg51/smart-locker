@@ -16,6 +16,8 @@ const envSchema = z.object({
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
   RELOCK_SECONDS: z.coerce.number().int().min(1).max(3600).default(30),
   CRON_SECRET: z.string().min(16).optional(),
+  SHARING_ENABLED: z.enum(["true", "false"]).default("true").transform((value) => value === "true"),
+  LOCK_COMMANDS_ENABLED: z.enum(["true", "false"]).default("true").transform((value) => value === "true"),
   E2E: z.enum(["1"]).optional(),
 })
 
@@ -30,4 +32,8 @@ let cached: Env | null = null
 export function getEnv(): Env {
   cached ??= parseEnv(process.env)
   return cached
+}
+
+export function resetEnvCacheForTests(): void {
+  cached = null
 }

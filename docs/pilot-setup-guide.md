@@ -94,9 +94,11 @@ Ask the resident to:
 
 If the pilot must be paused:
 
-- Take the app offline or block mutations at the proxy. There is no operator-wide read-only switch, and mock mode still simulates successful lock/unlock commands.
+- To pause new guest access, set `SHARING_ENABLED=false` and restart or redeploy. Creating and redeeming links is blocked; revoking links, owner lock/unlock, and guest relock still work.
+- To pause unlocks while keeping locks available, set `LOCK_COMMANDS_ENABLED=false` and restart or redeploy. Owners and guests cannot unlock; owners can still lock.
+- To revoke live links immediately, run `pnpm bulk-revoke --email resident@example.com --yes` or `pnpm bulk-revoke --all --yes` against the pilot database. The command requires `--yes` and exactly one of `--email` or `--all`.
+- Take the app offline or block mutations at the proxy if the whole service must pause. The env switches are deploy-time changes; a running process must be restarted or redeployed before a switch takes effect.
 - Setting `LOCK_PROVIDER=mock` only prevents real vendor calls. It does not pause the app; use it alongside taking the app offline if hardware must be isolated.
-- Revoke active share grants from each owner's locker page. There is no bulk revoke control, so if links must stop immediately, take the app offline and remove guest access at the network layer.
 - Rotate vendor credentials and update the encrypted credential record once Task 15 is available.
 - Tell residents the service is unavailable rather than implying the app is read-only.
 - Preserve database backups according to the pilot's data-retention policy. Account deletion is still available and is permanent.

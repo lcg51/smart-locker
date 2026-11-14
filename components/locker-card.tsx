@@ -30,6 +30,7 @@ function displayStatus(status: LockerRecord["status"] | LockStatusValue): Displa
 function messageForError(errorCode: string | undefined, command: Command): string {
   if (errorCode === "not_found") return "This locker is no longer available."
   if (errorCode === "rate_limited") return "Too many attempts. Wait a minute and try again."
+  if (errorCode === "commands_disabled") return "Unlock is paused. You can still lock the locker."
   return `Couldn't ${command} this locker. Check its connection and try again.`
 }
 

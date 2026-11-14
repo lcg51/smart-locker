@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/db"
 import { getLockerForUser } from "@/lib/lockers/queries"
+import { isSharingEnabled } from "@/lib/ops/controls"
 import { getRateLimiter } from "@/lib/rate-limit"
 import type { RateLimiter } from "@/lib/rate-limit"
 import { generateShareToken, hashShareToken } from "@/lib/shares/token"
 import type { ShareGrant } from "@prisma/client"
 
-export type ShareLimitCode = "rate_limited" | "share_limit_reached"
+export type ShareLimitCode = "rate_limited" | "share_limit_reached" | "sharing_disabled"
 
 export class ShareLimitError extends Error {
   readonly code: ShareLimitCode
@@ -44,6 +45,8 @@ export async function createShareGrant(
 
   const locker = await getLockerForUser(input.userId, input.lockerId)
   if (!locker) throw new Error("locker_not_found")
+
+  if (!isSharingEnabled()) throw new ShareLimitError("sharing_disabled")
 
   const now = input.now ?? new Date()
   const limiter = input.limiter ?? getRateLimiter()

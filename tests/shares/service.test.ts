@@ -1,12 +1,18 @@
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { prisma } from "@/lib/db"
+import { resetEnvCacheForTests } from "@/lib/env"
 import { provisionApartment } from "@/lib/ops/provision"
 import { createInMemoryRateLimiter } from "@/lib/rate-limit"
+import { redeemShareToken, resolveShareToken } from "@/lib/shares/redeem"
 import { createShareGrant, listActiveGrants, revokeShareGrant } from "@/lib/shares/service"
 import { hashShareToken } from "@/lib/shares/token"
 import { resetDb } from "@/tests/helpers/db"
 
-beforeEach(resetDb)
+beforeEach(async () => {
+  vi.unstubAllEnvs()
+  resetEnvCacheForTests()
+  await resetDb()
+})
 
 function allowAllLimiter() {
   return { async check() { return true } }
@@ -84,6 +90,34 @@ describe("createShareGrant", () => {
 
     await expect(createShareGrant({ userId, lockerId: locker.id, limiter, now }))
       .rejects.toMatchObject({ code: "share_limit_reached" })
+  })
+
+  it("refuses to create or redeem a share while sharing is disabled", async () => {
+    const { userId, locker } = await seed()
+    const { token } = await createShareGrant({ userId, lockerId: locker.id })
+
+    vi.stubEnv("SHARING_ENABLED", "false")
+    resetEnvCacheForTests()
+
+    await expect(createShareGrant({ userId, lockerId: locker.id }))
+      .rejects.toMatchObject({ code: "sharing_disabled" })
+    await expect(redeemShareToken({ token, ip: "203.0.113.1" }))
+      .resolves.toEqual({ ok: false, reason: "sharing_disabled" })
+  })
+
+  it("refuses guest redemption while unlock commands are disabled", async () => {
+    const { userId, locker } = await seed()
+    const { token } = await createShareGrant({ userId, lockerId: locker.id })
+
+    vi.stubEnv("LOCK_COMMANDS_ENABLED", "false")
+    resetEnvCacheForTests()
+
+    await expect(resolveShareToken(token)).resolves.toEqual({
+      ok: false,
+      reason: "commands_disabled",
+    })
+    await expect(redeemShareToken({ token, ip: "203.0.113.1" }))
+      .resolves.toEqual({ ok: false, reason: "commands_disabled" })
   })
 })
 
