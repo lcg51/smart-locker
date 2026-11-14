@@ -29,11 +29,13 @@ with `TTLOCK_ACCESS_TOKEN` and `CREDENTIAL_ENCRYPTION_KEY` set. The script does 
 - Use PostgreSQL in an EU region where available. Confirm the provider's region and backup policy.
 - Point `DATABASE_URL` at the pilot database.
 - Run `pnpm db:deploy` against that database. The schema must exist before provisioning. Do not use `prisma migrate reset` outside the test environment.
-- Set production values for `APP_URL`, `AUTH_SECRET`, `EMAIL_FROM`, and `RESEND_API_KEY`.
+- Set production values for `APP_URL`, `AUTH_SECRET`, `EMAIL_FROM`, `RESEND_API_KEY`, and `PRIVACY_CONTACT_EMAIL`.
 - Verify the Resend sending domain and add the required DNS records before inviting residents.
+- Replace `PRIVACY_CONTACT_EMAIL` with the monitored pilot contact address, have counsel review `/privacy` and `docs/privacy/processor-region-checklist.md`, and complete every `TODO` in that checklist before inviting residents.
 - Configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` if the app runs more than one instance. Without Upstash, limits are per process and each instance gets its own quota.
 - Set `CRON_SECRET` to a random value of at least 16 characters and keep it in the deployment's secret store. The relock fallback returns `503` until it is set.
 - Confirm `/api/cron/relock` is scheduled every minute (`vercel.json`). Vercel Hobby does not allow one-minute crons; on that plan, schedule the endpoint with an external scheduler and record the actual interval in the pilot log. The fallback runs within one scheduler interval after `relockAt` becomes due; provider or scheduler failures can delay it further.
+- Confirm `/api/cron/cleanup` is scheduled daily at 03:00 UTC (`vercel.json`) and has run once. It deletes inactive share links and expired sessions/verification tokens 30 days after they stop being usable, and lock events after 12 months. It also requires `CRON_SECRET`.
 - Put a trusted proxy in front of the app so the first `x-forwarded-for` entry is the real client IP. Magic-link and guest-redemption limits key on that value.
 - Rate limits: magic links 5 per 10 minutes per email and 20 per 10 minutes per IP; share creation 10 per hour per resident and 20 active links per locker; owner commands 30 per minute per resident; guest redemption 10 per minute per IP and 20 per minute per token.
 - Keep `LOCK_PROVIDER=mock` until hardware and Task 15 are ready.

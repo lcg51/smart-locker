@@ -1,4 +1,5 @@
 import { Bell, LockKeyhole, LogOut, ShieldCheck, SunMoon, UserRound } from "lucide-react"
+import Link from "next/link"
 import { AppearanceSettings } from "@/components/appearance-settings"
 import { DeleteAccountDialog } from "@/components/delete-account-dialog"
 import { GuestUnlockEmailToggle } from "@/components/guest-unlock-email-toggle"
@@ -36,6 +37,9 @@ export default async function SettingsPage() {
             <div className="min-w-0">
               <p className="text-sm text-muted-foreground">Email address</p>
               <p className="mt-1 break-all font-medium">{user.email}</p>
+              <Link className="mt-2 inline-block text-sm underline underline-offset-4" href="/privacy">
+                Privacy notice
+              </Link>
             </div>
             <SignOutButton className="min-h-11 w-full sm:w-auto" variant="outline">
               <LogOut aria-hidden="true" className="size-4" />

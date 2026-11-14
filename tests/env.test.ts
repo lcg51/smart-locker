@@ -7,6 +7,7 @@ const valid = {
   APP_URL: "http://localhost:3000",
   EMAIL_FROM: "no-reply@example.com",
   RESEND_API_KEY: "re_test",
+  PRIVACY_CONTACT_EMAIL: "privacy@example.com",
 }
 
 describe("parseEnv", () => {
@@ -20,6 +21,11 @@ describe("parseEnv", () => {
 
   it("rejects a missing database url", () => {
     const { DATABASE_URL: _DATABASE_URL, ...rest } = valid
+    expect(() => parseEnv(rest)).toThrow()
+  })
+
+  it("requires a privacy contact email", () => {
+    const { PRIVACY_CONTACT_EMAIL: _PRIVACY_CONTACT_EMAIL, ...rest } = valid
     expect(() => parseEnv(rest)).toThrow()
   })
 })
