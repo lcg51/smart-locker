@@ -4,7 +4,10 @@ import { GuestUnlock } from "@/components/guest-unlock"
 import { formatShareExpiry } from "@/lib/shares/presentation"
 import { resolveRelockState, resolveShareToken } from "@/lib/shares/redeem"
 
-export const metadata: Metadata = { referrer: "no-referrer" }
+export const metadata: Metadata = {
+  referrer: "no-referrer",
+  robots: { index: false, follow: false, nocache: true },
+}
 
 export default async function GuestSharePage({
   params,

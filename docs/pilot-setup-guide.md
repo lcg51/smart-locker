@@ -84,6 +84,7 @@ Ask the resident to:
 - Tap **Unlock locker** and confirm the 30-second relock countdown appears, then wait for **Locker relocked.** and confirm the owner's locker shows **Locked**.
 - Close the guest tab during the countdown and confirm the cron fallback returns the locker to **Locked** within one scheduler interval after the deadline (one minute on Vercel Pro; the configured external interval otherwise), allowing for provider failures.
 - Confirm the owner receives the guest-unlock email if notifications are enabled.
+- In DevTools → Network, confirm the share document sends `Referrer-Policy: no-referrer`, `Cache-Control: no-store`, `X-Robots-Tag: noindex`, `X-Frame-Options: DENY`, and a `Content-Security-Policy` containing `frame-ancestors 'none'`. Confirm the console has no CSP errors. A share token must never be indexed or cached.
 - Revoke the link from the owner's locker page and confirm the guest page shows the generic unavailable message after reload.
 
 ## 7. Rollback
