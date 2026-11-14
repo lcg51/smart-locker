@@ -16,6 +16,8 @@ const TERMINAL_UNLOCK_REASONS: Extract<GuestRedeemResult, { ok: false }>["reason
   "revoked",
   "expired",
   "exhausted",
+  "sharing_disabled",
+  "commands_disabled",
 ]
 
 function parseDeadline(value: string | null | undefined): number | null {

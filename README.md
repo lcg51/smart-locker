@@ -108,7 +108,9 @@ CI pins Node 22 (`.nvmrc`) and pnpm 12.16.1 (`packageManager`). Both jobs run Po
 | `UPSTASH_REDIS_REST_URL` | Optional; enables distributed rate limiting for sign-in, shares, and lock commands. |
 | `UPSTASH_REDIS_REST_TOKEN` | Optional; required with the Upstash URL. |
 | `RELOCK_SECONDS` | Guest relock delay in seconds; defaults to `30`. |
-| `CRON_SECRET` | Optional bearer secret for the relock cron endpoint; required in production for the fallback sweep. |
+| `CRON_SECRET` | Optional bearer secret for the relock and cleanup cron endpoints; required in production for both scheduled jobs. |
+| `SHARING_ENABLED` | Set `false` to block creating and redeeming share links while keeping revoke and lock available; defaults to `true`. |
+| `LOCK_COMMANDS_ENABLED` | Set `false` to block unlocks while keeping locks available; defaults to `true`. |
 | `E2E` | Set only in the test environment; enables `/api/test/session`. |
 
 If Upstash is not configured, redemption uses an in-memory limiter, which is suitable for a single app instance only.
@@ -116,6 +118,13 @@ If Upstash is not configured, redemption uses an in-memory limiter, which is sui
 Guest unlocks set a server-side `relockAt` deadline. The guest page counts down to that deadline and calls the relock action when it reaches zero; the page reports the server result and never claims a relock it did not confirm. `/api/cron/relock` is a one-minute fallback for guests who close the tab before the timer fires. It requires `CRON_SECRET` and the Vercel cron configured in `vercel.json`; on plans that do not allow one-minute crons, schedule the same endpoint externally and document the achieved interval.
 
 Retention is enforced by `/api/cron/cleanup` (daily at 03:00 UTC, also protected by `CRON_SECRET`): inactive share links and expired sessions/verification tokens are removed 30 days after they stop being usable, and lock events after 12 months. The public privacy notice is at `/privacy`; set `PRIVACY_CONTACT_EMAIL` to the monitored contact before inviting residents.
+
+### Emergency controls
+
+- `SHARING_ENABLED=false` blocks creating and redeeming share links. Revoking links, owner lock/unlock, and guest relock stay available.
+- `LOCK_COMMANDS_ENABLED=false` blocks owner and guest unlocks. Locking stays available.
+- `pnpm bulk-revoke --email resident@example.com --yes` revokes that resident's live links; `pnpm bulk-revoke --all --yes` revokes every live link. The command refuses to run without `--yes` and requires exactly one target. Point `DATABASE_URL` at the intended database first.
+- These are deploy-time environment changes. A running process must be restarted or redeployed before a switch takes effect.
 
 ## Mock and TTLock providers
 

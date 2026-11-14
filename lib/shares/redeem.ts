@@ -7,12 +7,13 @@ import { getLockProvider } from "@/lib/locks"
 import type { LockProvider } from "@/lib/locks/types"
 import { getRateLimiter } from "@/lib/rate-limit"
 import type { RateLimiter } from "@/lib/rate-limit"
+import { isLockCommandsEnabled, isSharingEnabled } from "@/lib/ops/controls"
 import { hashShareToken } from "@/lib/shares/token"
 import type { GuestUnlockEmailInput, GuestUnlockEmailSender } from "@/lib/email"
 
 export type GrantFailure = {
   ok: false
-  reason: "not_found" | "revoked" | "expired" | "exhausted"
+  reason: "not_found" | "revoked" | "expired" | "exhausted" | "sharing_disabled" | "commands_disabled"
 }
 
 type ResolvedGrantData = {
@@ -50,6 +51,9 @@ export type RedeemInput = {
 }
 
 async function resolveShareTokenAt(token: string, now: Date): Promise<ResolvedGrant | GrantFailure> {
+  if (!isSharingEnabled()) return { ok: false, reason: "sharing_disabled" }
+  if (!isLockCommandsEnabled()) return { ok: false, reason: "commands_disabled" }
+
   const grant = await prisma.shareGrant.findUnique({
     where: { tokenHash: hashShareToken(token) },
     select: {
@@ -153,6 +157,9 @@ export async function redeemShareToken({
   now = new Date(),
   relockSeconds = getEnv().RELOCK_SECONDS,
 }: RedeemInput): Promise<RedeemResult> {
+  if (!isSharingEnabled()) return { ok: false, reason: "sharing_disabled" }
+  if (!isLockCommandsEnabled()) return { ok: false, reason: "commands_disabled" }
+
   const lockProvider = provider ?? await getLockProvider()
   const tokenHash = hashShareToken(token)
   const relockAt = new Date(now.getTime() + relockSeconds * 1000)

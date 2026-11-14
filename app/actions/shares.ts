@@ -7,7 +7,7 @@ import { createShareGrant, revokeShareGrant, ShareLimitError } from "@/lib/share
 
 export type CreateShareResult =
   | { ok: true; url: string; grantId: string }
-  | { ok: false; error: "rate_limited" | "share_limit_reached" | "invalid_input" }
+  | { ok: false; error: "rate_limited" | "share_limit_reached" | "sharing_disabled" | "invalid_input" }
 
 export async function createShare(
   lockerId: string,

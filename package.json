@@ -19,7 +19,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:generate": "prisma generate",
     "test:db": "dotenv -e .env.test -- prisma migrate deploy",
-    "provision": "dotenv -e .env -- tsx scripts/provision.ts"
+    "provision": "dotenv -e .env -- tsx scripts/provision.ts",
+    "bulk-revoke": "dotenv -e .env -- tsx scripts/bulk-revoke.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

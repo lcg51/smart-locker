@@ -15,6 +15,7 @@ type CreatedShare = { url: string; grantId: string }
 function shareErrorMessage(error: Extract<CreateShareResult, { ok: false }>["error"]): string {
   if (error === "rate_limited") return "Too many links. Try again later."
   if (error === "share_limit_reached") return "This locker has too many active links. Revoke one first."
+  if (error === "sharing_disabled") return "Sharing is paused. Try again later."
   return "Couldn't create a share link. Check the values and try again."
 }
 
