@@ -4,12 +4,19 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Check, Copy, Link2, X } from "lucide-react"
 import { createShare } from "@/app/actions/shares"
+import type { CreateShareResult } from "@/app/actions/shares"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 type CreatedShare = { url: string; grantId: string }
+
+function shareErrorMessage(error: Extract<CreateShareResult, { ok: false }>["error"]): string {
+  if (error === "rate_limited") return "Too many links. Try again later."
+  if (error === "share_limit_reached") return "This locker has too many active links. Revoke one first."
+  return "Couldn't create a share link. Check the values and try again."
+}
 
 export function ShareDialog({ lockerId, lockerName }: { lockerId: string; lockerName: string }) {
   const router = useRouter()
@@ -33,7 +40,12 @@ export function ShareDialog({ lockerId, lockerName }: { lockerId: string; locker
     startTransition(async () => {
       try {
         const result = await createShare(lockerId, formData)
-        setCreatedShare(result)
+        if (!result.ok) {
+          setError(shareErrorMessage(result.error))
+          return
+        }
+
+        setCreatedShare({ url: result.url, grantId: result.grantId })
         router.refresh()
       } catch {
         setError("Couldn't create a share link. Check the values and try again.")

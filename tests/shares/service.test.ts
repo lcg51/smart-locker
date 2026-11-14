@@ -1,11 +1,16 @@
 import { beforeEach, describe, expect, it } from "vitest"
 import { prisma } from "@/lib/db"
 import { provisionApartment } from "@/lib/ops/provision"
+import { createInMemoryRateLimiter } from "@/lib/rate-limit"
 import { createShareGrant, listActiveGrants, revokeShareGrant } from "@/lib/shares/service"
 import { hashShareToken } from "@/lib/shares/token"
 import { resetDb } from "@/tests/helpers/db"
 
 beforeEach(resetDb)
+
+function allowAllLimiter() {
+  return { async check() { return true } }
+}
 
 async function seed() {
   const { userId } = await provisionApartment({
@@ -53,6 +58,32 @@ describe("createShareGrant", () => {
     await expect(createShareGrant({ userId: other.id, lockerId: locker.id })).rejects.toThrow("locker_not_found")
     await prisma.locker.update({ where: { id: locker.id }, data: { deletedAt: new Date() } })
     await expect(createShareGrant({ userId, lockerId: locker.id })).rejects.toThrow("locker_not_found")
+  })
+
+  it("rejects share creation after ten grants in an hour", async () => {
+    const { userId, locker } = await seed()
+    const now = new Date("2026-11-14T10:00:00.000Z")
+    const limiter = createInMemoryRateLimiter(() => now.getTime())
+
+    for (let i = 0; i < 10; i += 1) {
+      await createShareGrant({ userId, lockerId: locker.id, limiter, now })
+    }
+
+    await expect(createShareGrant({ userId, lockerId: locker.id, limiter, now }))
+      .rejects.toMatchObject({ code: "rate_limited" })
+  })
+
+  it("caps active grants at twenty per locker", async () => {
+    const { userId, locker } = await seed()
+    const now = new Date("2026-11-14T10:00:00.000Z")
+    const limiter = allowAllLimiter()
+
+    for (let i = 0; i < 20; i += 1) {
+      await createShareGrant({ userId, lockerId: locker.id, limiter, now })
+    }
+
+    await expect(createShareGrant({ userId, lockerId: locker.id, limiter, now }))
+      .rejects.toMatchObject({ code: "share_limit_reached" })
   })
 })
 

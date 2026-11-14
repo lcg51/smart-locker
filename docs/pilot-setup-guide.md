@@ -31,10 +31,11 @@ with `TTLOCK_ACCESS_TOKEN` and `CREDENTIAL_ENCRYPTION_KEY` set. The script does 
 - Run `pnpm db:deploy` against that database. The schema must exist before provisioning. Do not use `prisma migrate reset` outside the test environment.
 - Set production values for `APP_URL`, `AUTH_SECRET`, `EMAIL_FROM`, and `RESEND_API_KEY`.
 - Verify the Resend sending domain and add the required DNS records before inviting residents.
-- Configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` if the app runs more than one instance; otherwise rate limits are per-process.
+- Configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` if the app runs more than one instance. Without Upstash, limits are per process and each instance gets its own quota.
 - Set `CRON_SECRET` to a random value of at least 16 characters and keep it in the deployment's secret store. The relock fallback returns `503` until it is set.
 - Confirm `/api/cron/relock` is scheduled every minute (`vercel.json`). Vercel Hobby does not allow one-minute crons; on that plan, schedule the endpoint with an external scheduler and record the actual interval in the pilot log. The fallback runs within one scheduler interval after `relockAt` becomes due; provider or scheduler failures can delay it further.
-- Put a trusted proxy in front of the app so the first `x-forwarded-for` entry is the real client IP. The share limiter keys on that value.
+- Put a trusted proxy in front of the app so the first `x-forwarded-for` entry is the real client IP. Magic-link and guest-redemption limits key on that value.
+- Rate limits: magic links 5 per 10 minutes per email and 20 per 10 minutes per IP; share creation 10 per hour per resident and 20 active links per locker; owner commands 30 per minute per resident; guest redemption 10 per minute per IP and 20 per minute per token.
 - Keep `LOCK_PROVIDER=mock` until hardware and Task 15 are ready.
 - Treat the CI gate as required before merging to `dev`: every PR runs lint, typecheck, unit tests, build, and E2E. The `e2e` job uses only the `smart_locker_test` database and must never receive a pilot `DATABASE_URL`.
 
