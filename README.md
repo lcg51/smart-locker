@@ -131,6 +131,7 @@ Guest unlocks set a server-side `relockAt` deadline. The guest page counts down 
 - **Device PIN is not security.** The optional 4-digit PIN is a local convenience lock stored as a salted PBKDF2 hash in that browser. It is not sent to the server, does not authenticate the account, and is cleared on sign-out.
 - **Data handling.** The pilot targets Spain and EU hosting where available. The intent is GDPR/LOPDGDD compliance. Account deletion hard-deletes the user, lockers, grants, events, sessions, provider accounts, verification tokens, and allowlist entry. The MVP keeps no anonymised audit trail after deletion; retaining access history is a post-MVP policy decision.
 - **No sensitive data in URLs beyond the share token.** Share pages send `Referrer-Policy: no-referrer`, and analytics pageviews are suppressed on `/share/*`.
+- **Security headers.** Every response sets `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, a restrictive `Content-Security-Policy` with `frame-ancestors 'none'`, and a minimal `Permissions-Policy`. Share pages add `Cache-Control: no-store`, `X-Robots-Tag: noindex, nofollow, noarchive`, and `Referrer-Policy: no-referrer`; `/dashboard`, `/auth`, and `/onboarding` add `no-store` and `noindex`. The CSP allows inline scripts because Next.js needs them for bootstrap; a nonce-based policy is post-MVP.
 
 ## Project layout
 
