@@ -11,6 +11,7 @@ import {
   unlockLockerForUser,
 } from "@/lib/lockers/service"
 import { MockLockProvider } from "@/lib/locks/mock"
+import { createInMemoryRateLimiter } from "@/lib/rate-limit"
 import type { LockProvider } from "@/lib/locks/types"
 import { resetDb } from "@/tests/helpers/db"
 
@@ -109,6 +110,33 @@ describe("unlockLockerForUser", () => {
       errorCode: "offline",
     })
     expect(await prisma.lockEvent.count({ where: { success: false, errorCode: "offline" } })).toBe(1)
+  })
+
+  it("rate-limits owner commands per resident", async () => {
+    const { userId, locker } = await seed()
+    const now = Date.parse("2026-11-14T10:00:00.000Z")
+    const limiter = createInMemoryRateLimiter(() => now)
+    const provider = new MockLockProvider()
+
+    for (let i = 0; i < 30; i += 1) {
+      await expect(unlockLockerForUser({
+        userId,
+        lockerId: locker.id,
+        provider,
+        limiter,
+      })).resolves.toMatchObject({ ok: true })
+    }
+
+    await expect(unlockLockerForUser({
+      userId,
+      lockerId: locker.id,
+      provider,
+      limiter,
+    })).resolves.toEqual({ ok: false, errorCode: "rate_limited" })
+
+    expect(await prisma.lockEvent.count({
+      where: { lockerId: locker.id, actorType: "OWNER", success: true },
+    })).toBe(30)
   })
 })
 

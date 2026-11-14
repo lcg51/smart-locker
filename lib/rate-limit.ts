@@ -64,7 +64,7 @@ export function getRateLimiter(): RateLimiter {
         rateLimit = new Ratelimit({
           redis: sharedRedis!,
           limiter: Ratelimit.slidingWindow(limit, `${windowMs} ms`),
-          prefix: "smart-locker:share",
+          prefix: "smart-locker:limits",
         })
         upstashLimiters.set(configKey, rateLimit)
       }

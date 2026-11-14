@@ -126,7 +126,7 @@ Guest unlocks set a server-side `relockAt` deadline. The guest page counts down 
 - **Guest links are bearer credentials.** Tokens are 32 random bytes, returned once, and stored only as SHA-256 hashes. Treat a link like a key.
 - **Expiry and use limits.** Links default to 60 minutes and 5 uses, with caps of 24 hours and 50 uses. Redemption is atomic across concurrent guests.
 - **Fail closed.** Expired, revoked, exhausted, and unknown links show the same generic unavailable page.
-- **Rate limiting.** Redemption is limited per IP and per token hash.
+- **Rate limiting.** Magic-link requests are limited to 5 per 10 minutes per normalized email and 20 per 10 minutes per client IP. Share creation is limited to 10 per hour per resident and 20 active grants per locker. Owner lock/unlock commands are limited to 30 per minute per resident. Guest redemption is limited to 10 per minute per IP and 20 per minute per token.
 - **Minimal guest disclosure.** Guest pages show the locker display name, owner-provided guest label, and expiry; never the owner's email, gateway ID, vendor lock ID, or other lockers.
 - **Device PIN is not security.** The optional 4-digit PIN is a local convenience lock stored as a salted PBKDF2 hash in that browser. It is not sent to the server, does not authenticate the account, and is cleared on sign-out.
 - **Data handling.** The pilot targets Spain and EU hosting where available. The intent is GDPR/LOPDGDD compliance. Account deletion hard-deletes the user, lockers, grants, events, sessions, provider accounts, verification tokens, and allowlist entry. The MVP keeps no anonymised audit trail after deletion; retaining access history is a post-MVP policy decision.

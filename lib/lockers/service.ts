@@ -3,11 +3,14 @@ import { prisma } from "@/lib/db"
 import { getLockerForUser } from "@/lib/lockers/queries"
 import { getLockProvider } from "@/lib/locks"
 import type { LockProvider, LockerState } from "@/lib/locks/types"
+import { getRateLimiter } from "@/lib/rate-limit"
+import type { RateLimiter } from "@/lib/rate-limit"
 
 export type LockerActionInput = {
   userId: string
   lockerId: string
   provider?: LockProvider
+  limiter?: RateLimiter
 }
 
 export type LockerActionResult = {
@@ -89,10 +92,14 @@ async function recordSuccess(
 }
 
 async function runLockCommand(input: LockerActionInput, command: Command): Promise<LockerActionResult> {
-  const provider = input.provider ?? await getLockProvider()
   const locker = await getLockerForUser(input.userId, input.lockerId)
   if (!locker) return { ok: false, errorCode: "not_found" }
 
+  const limiter = input.limiter ?? getRateLimiter()
+  const allowed = await limiter.check(`lock:user:${input.userId}`, 30, 60_000)
+  if (!allowed) return { ok: false, errorCode: "rate_limited" }
+
+  const provider = input.provider ?? await getLockProvider()
   const targetStatus = command === "unlock" ? "unlocked" : "locked"
   let state: LockerState | undefined
 
