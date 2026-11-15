@@ -2,9 +2,12 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ArrowLeft, Battery, LockKeyhole, LockKeyholeOpen } from "lucide-react"
 import { ActiveShares } from "@/components/active-shares"
+import { LockerActivity } from "@/components/locker-activity"
+import { LockerDetailControls } from "@/components/locker-detail-controls"
 import { ShareDialog } from "@/components/share-dialog"
 import { Button } from "@/components/ui/button"
 import { requireUser } from "@/lib/auth/session"
+import { listLockEvents } from "@/lib/events/queries"
 import { getLockerForUser } from "@/lib/lockers/queries"
 import { listActiveGrants } from "@/lib/shares/service"
 
@@ -18,7 +21,10 @@ export default async function LockerDetailsPage({
   const locker = await getLockerForUser(user.id, id)
   if (!locker) notFound()
 
-  const grants = await listActiveGrants({ userId: user.id, lockerId: locker.id })
+  const [grants, { events }] = await Promise.all([
+    listActiveGrants({ userId: user.id, lockerId: locker.id }),
+    listLockEvents({ userId: user.id, lockerId: locker.id, limit: 10 }),
+  ])
   const status = locker.status === "LOCKED" ? "Locked" : locker.status === "UNLOCKED" ? "Unlocked" : "Status unknown"
   const StatusIcon = locker.status === "LOCKED" ? LockKeyhole : LockKeyholeOpen
 
@@ -49,6 +55,8 @@ export default async function LockerDetailsPage({
         <ShareDialog lockerId={locker.id} lockerName={locker.name} />
       </div>
 
+      <LockerDetailControls locker={locker} />
+
       <section aria-labelledby="active-shares-title" className="mt-8">
         <div className="mb-4">
           <h2 id="active-shares-title" className="text-xl font-semibold">Active share links</h2>
@@ -56,6 +64,8 @@ export default async function LockerDetailsPage({
         </div>
         <ActiveShares grants={grants} />
       </section>
+
+      <LockerActivity events={events} lockerId={locker.id} />
     </main>
   )
 }

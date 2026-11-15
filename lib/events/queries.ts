@@ -18,6 +18,7 @@ export async function listLockEvents(input: {
     },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: limit + 1,
+    include: { grant: { select: { guestLabel: true } } },
     ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
   })
 

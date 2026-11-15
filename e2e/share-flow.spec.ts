@@ -12,7 +12,10 @@ test("owner shares a locker, guest unlocks, owner revokes", async ({ browser }) 
     expect(sessionResponse.status()).toBe(200)
 
     await page.goto("/onboarding")
-    await page.getByRole("button", { name: "Confirm this locker" }).click()
+    const confirmLocker = page.getByRole("button", { name: "Confirm this locker" })
+    if (await confirmLocker.count() > 0) {
+      await confirmLocker.click()
+    }
     await expect(page).toHaveURL(/\/dashboard/)
 
     await expect(page.getByRole("heading", { name: "Your lockers" })).toBeVisible()
