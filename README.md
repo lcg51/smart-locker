@@ -14,6 +14,7 @@ The MVP runs on a mock lock provider so the product flow can be built and tested
 - Owner activity history and optional guest-unlock email notifications.
 - Account settings, guest-email preference, and hard account deletion.
 - Public privacy notice at `/privacy` and scheduled data retention.
+- Installable PWA with an offline fallback; unlocking still requires a connection.
 - Light, dark, or system appearance, defaulting to the device preference and chosen in Settings.
 - Optional local device PIN as a convenience lock; it is not authentication.
 - End-to-end share-flow coverage with Playwright.
@@ -145,6 +146,7 @@ Retention is enforced by `/api/cron/cleanup` (daily at 03:00 UTC, also protected
 - **Data handling.** The pilot targets Spain and EU hosting where available. The intent is GDPR/LOPDGDD compliance. The privacy notice at `/privacy` describes the processing and rights; inactive share links, expired sessions/tokens, and old lock events are removed on the retention schedule. Account deletion hard-deletes the user, lockers, grants, events, sessions, provider accounts, verification tokens, and allowlist entry. The MVP keeps no anonymised audit trail after deletion.
 - **No sensitive data in URLs beyond the share token.** Share pages send `Referrer-Policy: no-referrer`, and analytics pageviews are suppressed on `/share/*`.
 - **Security headers.** Every response sets `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, a restrictive `Content-Security-Policy` with `frame-ancestors 'none'`, and a minimal `Permissions-Policy`. Share pages add `Cache-Control: no-store`, `X-Robots-Tag: noindex, nofollow, noarchive`, and `Referrer-Policy: no-referrer`; `/dashboard`, `/auth`, and `/onboarding` add `no-store` and `noindex`. The CSP allows inline scripts because Next.js needs them for bootstrap; a nonce-based policy is post-MVP.
+- **No offline unlocking.** The service worker caches only static assets and `/offline`. It never caches `/dashboard`, `/share/*`, `/auth`, `/onboarding`, or `/api/*`, and unlocking always requires a network connection.
 
 ## Project layout
 
