@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest"
 import { prisma } from "@/lib/db"
 import { provisionApartment } from "@/lib/ops/provision"
 import { listLockEvents } from "@/lib/events/queries"
+import { createShareGrant } from "@/lib/shares/service"
 import { resetDb } from "@/tests/helpers/db"
 
 beforeEach(resetDb)
@@ -68,5 +69,41 @@ describe("listLockEvents", () => {
     const maximum = await listLockEvents({ userId, limit: 101 })
     expect(maximum.events).toHaveLength(100)
     expect(maximum.nextCursor).not.toBeNull()
+  })
+
+  it("includes only the guest label for guest events", async () => {
+    const { userId, locker } = await seed()
+    const { grant } = await createShareGrant({
+      userId,
+      lockerId: locker.id,
+      guestLabel: "Cleaner",
+    })
+    const guestEvent = await prisma.lockEvent.create({
+      data: {
+        lockerId: locker.id,
+        grantId: grant.id,
+        actorType: "GUEST",
+        action: "UNLOCK",
+        success: true,
+        createdAt: new Date("2025-01-02T00:00:00.000Z"),
+      },
+    })
+    const ownerEvent = await prisma.lockEvent.create({
+      data: {
+        lockerId: locker.id,
+        actorType: "OWNER",
+        action: "UNLOCK",
+        success: true,
+        createdAt: new Date("2025-01-01T00:00:00.000Z"),
+      },
+    })
+
+    const { events } = await listLockEvents({ userId, lockerId: locker.id })
+    const guest = events.find((event) => event.id === guestEvent.id)
+    const owner = events.find((event) => event.id === ownerEvent.id)
+
+    expect(guest?.grant).toEqual({ guestLabel: "Cleaner" })
+    expect(guest?.grant).not.toHaveProperty("tokenHash")
+    expect(owner?.grant).toBeNull()
   })
 })

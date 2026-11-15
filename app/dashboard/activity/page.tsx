@@ -6,15 +6,9 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import { requireUser } from "@/lib/auth/session"
 import { getLockersForUser } from "@/lib/lockers/queries"
 import { listLockEvents } from "@/lib/events/queries"
+import { describeEvent, formatEventTime } from "@/lib/events/presentation"
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>
-
-function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date)
-}
 
 function buildActivityUrl(input: { cursor: string; lockerId?: string }): string {
   const params = new URLSearchParams({ cursor: input.cursor })
@@ -86,23 +80,29 @@ export default async function ActivityPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {events.map((event) => (
-                  <TableRow key={event.id}>
-                    <TableCell>
-                      <time dateTime={event.createdAt.toISOString()}>{formatDate(event.createdAt)}</time>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {lockers.find((locker) => locker.id === event.lockerId)?.name ?? "Locker"}
-                    </TableCell>
-                    <TableCell>{event.actorType === "GUEST" ? "Guest" : event.actorType === "OWNER" ? "Resident" : "System"}</TableCell>
-                    <TableCell>{event.action === "UNLOCK" ? "Unlock" : "Lock"}</TableCell>
-                    <TableCell>
-                      <Badge variant={event.success ? "secondary" : "destructive"}>
-                        {event.success ? "Succeeded" : "Failed"}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {events.map((event) => {
+                  const description = describeEvent(event)
+                  return (
+                    <TableRow key={event.id}>
+                      <TableCell>
+                        <time dateTime={event.createdAt.toISOString()}>{formatEventTime(event.createdAt)}</time>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {lockers.find((locker) => locker.id === event.lockerId)?.name ?? "Locker"}
+                      </TableCell>
+                      <TableCell>{description.actor}</TableCell>
+                      <TableCell>{description.action}</TableCell>
+                      <TableCell>
+                        <Badge variant={event.success ? "secondary" : "destructive"}>
+                          {description.result}
+                        </Badge>
+                        {description.detail && (
+                          <p className="mt-1 text-xs text-muted-foreground">{description.detail}</p>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </div>
