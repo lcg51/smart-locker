@@ -46,6 +46,13 @@ const nextConfig = {
       { source: "/dashboard/:path*", headers: noStoreHeaders },
       { source: "/auth/:path*", headers: noStoreHeaders },
       { source: "/onboarding/:path*", headers: noStoreHeaders },
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache" },
+          { key: "Service-Worker-Allowed", value: "/" },
+        ],
+      },
     ]
   },
 }
