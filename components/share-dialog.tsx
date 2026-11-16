@@ -2,9 +2,10 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { Check, Copy, Link2, X } from "lucide-react"
+import { Check, Copy, Link2, QrCode, Share2, X } from "lucide-react"
 import { createShare } from "@/app/actions/shares"
 import type { CreateShareResult } from "@/app/actions/shares"
+import { ShareQr } from "@/components/share-qr"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -25,6 +26,7 @@ export function ShareDialog({ lockerId, lockerName }: { lockerId: string; locker
   const [createdShare, setCreatedShare] = useState<CreatedShare | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copyMessage, setCopyMessage] = useState<string | null>(null)
+  const [showQr, setShowQr] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   function handleOpenChange(nextOpen: boolean) {
@@ -33,6 +35,7 @@ export function ShareDialog({ lockerId, lockerName }: { lockerId: string; locker
       setCreatedShare(null)
       setError(null)
       setCopyMessage(null)
+      setShowQr(false)
     }
   }
 
@@ -63,6 +66,29 @@ export function ShareDialog({ lockerId, lockerName }: { lockerId: string; locker
       setCopyMessage("Copy unavailable. Select and copy the link above.")
     }
   }
+
+  async function shareLink() {
+    if (!createdShare) return
+    setError(null)
+
+    if (typeof navigator === "undefined" || !navigator.share) {
+      setError("Sharing isn't available. Copy the link instead.")
+      return
+    }
+
+    try {
+      await navigator.share({
+        title: "Smart Locker access",
+        text: `Access to ${lockerName}`,
+        url: createdShare.url,
+      })
+    } catch (shareError) {
+      if (shareError instanceof DOMException && shareError.name === "AbortError") return
+      setError("Sharing isn't available. Copy the link instead.")
+    }
+  }
+
+  const canShare = typeof navigator !== "undefined" && "share" in navigator
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -102,6 +128,37 @@ export function ShareDialog({ lockerId, lockerName }: { lockerId: string; locker
               {copyMessage === "Link copied" ? "Copied" : "Copy link"}
             </Button>
             {copyMessage && <p aria-live="polite" className="text-sm text-muted-foreground">{copyMessage}</p>}
+
+            {error && <p className="text-sm text-destructive-text" role="alert">{error}</p>}
+
+            <div className="grid gap-2 sm:grid-cols-2">
+              {canShare && (
+                <Button className="min-h-11" onClick={shareLink} type="button" variant="outline">
+                  <Share2 aria-hidden="true" className="size-4" />
+                  Share…
+                </Button>
+              )}
+              <Button
+                aria-controls="share-qr"
+                aria-expanded={showQr}
+                className="min-h-11"
+                onClick={() => setShowQr((visible) => !visible)}
+                type="button"
+                variant="outline"
+              >
+                <QrCode aria-hidden="true" className="size-4" />
+                {showQr ? "Hide QR code" : "Show QR code"}
+              </Button>
+            </div>
+
+            {showQr && (
+              <div className="space-y-2" id="share-qr">
+                <ShareQr url={createdShare.url} />
+                <p className="text-center text-sm text-muted-foreground">
+                  Scan to open the guest link. The QR is generated in this browser.
+                </p>
+              </div>
+            )}
           </div>
         ) : (
           <form action={handleSubmit} className="space-y-5">
