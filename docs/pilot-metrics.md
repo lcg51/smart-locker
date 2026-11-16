@@ -13,7 +13,7 @@ pnpm metrics --from 2026-10-01 --to 2026-11-01
 - Dates are `YYYY-MM-DD` in UTC and the window is inclusive.
 - Either date can be omitted; the default is the last 28 calendar days.
 - The command exits non-zero for an invalid date, `from` after `to`, or a database error.
-- Point `DATABASE_URL` at the intended database first. The script loads `.env`.
+- Point `DATABASE_URL` at the intended database first. The script loads `.env.local` and then `.env`, with `.env.local` taking precedence.
 
 ## Definitions
 

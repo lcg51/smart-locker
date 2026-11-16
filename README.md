@@ -117,6 +117,8 @@ CI pins Node 22 (`.nvmrc`) and pnpm 12.16.1 (`packageManager`). Both jobs run Po
 
 If Upstash is not configured, redemption uses an in-memory limiter, which is suitable for a single app instance only.
 
+The ops scripts (`pnpm provision`, `pnpm bulk-revoke`, and `pnpm metrics`) load `.env.local` first and then `.env`; `.env.local` takes precedence. Next.js follows the same local-first convention.
+
 Guest unlocks set a server-side `relockAt` deadline. The guest page counts down to that deadline and calls the relock action when it reaches zero; the page reports the server result and never claims a relock it did not confirm. `/api/cron/relock` is a one-minute fallback for guests who close the tab before the timer fires. It requires `CRON_SECRET` and the Vercel cron configured in `vercel.json`; on plans that do not allow one-minute crons, schedule the same endpoint externally and document the achieved interval.
 
 Retention is enforced by `/api/cron/cleanup` (daily at 03:00 UTC, also protected by `CRON_SECRET`): inactive share links and expired sessions/verification tokens are removed 30 days after they stop being usable, and lock events after 12 months. The public privacy notice is at `/privacy`; set `PRIVACY_CONTACT_EMAIL` to the monitored contact before inviting residents.
