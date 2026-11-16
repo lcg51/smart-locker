@@ -10,6 +10,7 @@ The MVP runs on a mock lock provider so the product flow can be built and tested
 - Pre-provisioned apartment lockers with confirmation, renaming, and battery/status display.
 - Remote lock/unlock through a server-side `LockProvider`.
 - Expiring, use-limited share links that guests redeem without signing in.
+- OS share sheet and browser-generated QR code for guest links; the QR never leaves the browser or reaches analytics.
 - Guest unlocks relock automatically after 30 seconds; owner unlocks stay manual.
 - Owner activity history and optional guest-unlock email notifications.
 - Account settings, guest-email preference, and hard account deletion.
