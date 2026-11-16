@@ -128,6 +128,10 @@ Retention is enforced by `/api/cron/cleanup` (daily at 03:00 UTC, also protected
 - `pnpm bulk-revoke --email resident@example.com --yes` revokes that resident's live links; `pnpm bulk-revoke --all --yes` revokes every live link. The command refuses to run without `--yes` and requires exactly one target. Point `DATABASE_URL` at the intended database first.
 - These are deploy-time environment changes. A running process must be restarted or redeployed before a switch takes effect.
 
+### Pilot metrics
+
+`pnpm metrics --from YYYY-MM-DD --to YYYY-MM-DD` prints a read-only Markdown and JSON report of pilot activity. The default window is the last 28 days. See `docs/pilot-metrics.md` for definitions, zero-denominator guidance, and the MVP success signals.
+
 ## Mock and TTLock providers
 
 `LOCK_PROVIDER=mock` is the Phase 1 default. It supports provisioning, lock, unlock, and state reads without hardware, and auto-registers unknown lock IDs so seeded fixtures work.
