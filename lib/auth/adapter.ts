@@ -33,4 +33,23 @@ export const adapter = {
       },
     })
   },
+  async deleteSession(sessionToken: string): Promise<void> {
+    if (!baseAdapter.deleteSession) return
+
+    try {
+      await baseAdapter.deleteSession(sessionToken)
+    } catch (error) {
+      // A revoked session can still have a cookie in the browser. Auth.js then
+      // tries to delete it during the next sign-in; a missing row is not an error.
+      if (
+        error !== null
+        && typeof error === "object"
+        && "code" in error
+        && (error as { code?: string }).code === "P2025"
+      ) {
+        return
+      }
+      throw error
+    }
+  },
 }
