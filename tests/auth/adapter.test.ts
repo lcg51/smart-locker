@@ -12,8 +12,7 @@ beforeEach(async () => {
   await resetDb()
 })
 
-describe("auth adapter createSession", () => {
-  it("stores derived device and location labels when creating a session", async () => {
+describe("auth adapter createSession", () => {  it("stores derived device and location labels when creating a session", async () => {
     const user = await prisma.user.create({ data: { email: "ana@example.com" } })
     mocks.headers.mockResolvedValue(new Headers({
       "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
@@ -51,5 +50,27 @@ describe("auth adapter createSession", () => {
         deviceLabel: "Unknown device",
         locationLabel: null,
       })
+  })
+})
+
+describe("auth adapter deleteSession", () => {
+  it("does not throw when the session was already revoked", async () => {
+    await expect(adapter.deleteSession!("already-revoked")).resolves.toBeUndefined()
+  })
+
+  it("deletes an existing session", async () => {
+    const user = await prisma.user.create({ data: { email: "ana@example.com" } })
+    await prisma.session.create({
+      data: {
+        sessionToken: "session-token",
+        userId: user.id,
+        expires: new Date("2030-01-01T00:00:00.000Z"),
+      },
+    })
+
+    await adapter.deleteSession!("session-token")
+
+    await expect(prisma.session.findUnique({ where: { sessionToken: "session-token" } }))
+      .resolves.toBeNull()
   })
 })
