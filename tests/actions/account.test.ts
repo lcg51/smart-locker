@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { prisma } from "@/lib/db"
 import { requireUser } from "@/lib/auth/session"
+import { updateDisplayName } from "@/lib/account/profile"
 import { setGuestUnlockEmails } from "@/app/actions/account"
 import { resetDb } from "@/tests/helpers/db"
 
@@ -41,5 +42,28 @@ describe("setGuestUnlockEmails", () => {
     await expect(setGuestUnlockEmails(otherUser.id, false)).rejects.toThrow("unauthorized_account_update")
     await expect(prisma.user.findUniqueOrThrow({ where: { id: currentUser.id } })).resolves.toMatchObject({ guestUnlockEmails: true })
     await expect(prisma.user.findUniqueOrThrow({ where: { id: otherUser.id } })).resolves.toMatchObject({ guestUnlockEmails: true })
+  })
+})
+
+describe("updateDisplayName", () => {
+  it("trims and stores a valid name", async () => {
+    const user = await prisma.user.create({ data: { email: "current@example.com" } })
+
+    await expect(updateDisplayName({ userId: user.id, name: "  Ana  " })).resolves.toBe(true)
+    await expect(prisma.user.findUniqueOrThrow({ where: { id: user.id } }))
+      .resolves.toMatchObject({ name: "Ana" })
+  })
+
+  it("rejects an empty or overlong display name", async () => {
+    const user = await prisma.user.create({ data: { email: "current@example.com" } })
+
+    await expect(updateDisplayName({ userId: user.id, name: "   " })).resolves.toBe(false)
+    await expect(updateDisplayName({ userId: user.id, name: "x".repeat(41) })).resolves.toBe(false)
+    await expect(prisma.user.findUniqueOrThrow({ where: { id: user.id } }))
+      .resolves.toMatchObject({ name: null })
+  })
+
+  it("returns false for an unknown user", async () => {
+    await expect(updateDisplayName({ userId: "missing", name: "Ana" })).resolves.toBe(false)
   })
 })

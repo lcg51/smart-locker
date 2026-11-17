@@ -13,7 +13,7 @@ The MVP runs on a mock lock provider so the product flow can be built and tested
 - OS share sheet and browser-generated QR code for guest links; the QR never leaves the browser or reaches analytics.
 - Guest unlocks relock automatically after 30 seconds; owner unlocks stay manual.
 - Owner activity history and optional guest-unlock email notifications.
-- Account settings, guest-email preference, and hard account deletion.
+- Account settings, guest-email preference, display-name editing, active-session review, and hard account deletion.
 - Public privacy notice at `/privacy` and scheduled data retention.
 - Installable PWA with an offline fallback; unlocking still requires a connection.
 - Light, dark, or system appearance, defaulting to the device preference and chosen in Settings.
