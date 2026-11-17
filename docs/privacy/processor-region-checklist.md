@@ -6,7 +6,7 @@ a verified answer; do not assume a provider is compliant because it is popular.
 
 | Processor | Purpose | Data | Region | DPA status | Subprocessors | Transfer mechanism | Owner | Last reviewed |
 |---|---|---|---|---|---|---|---|---|
-| Vercel | Application hosting | Account, locker, share, and event data in transit and server logs | TODO | TODO | TODO | TODO | TODO | TODO |
+| Vercel | Application hosting and request geo headers | Account, locker, share, event, session device/location label data in transit and server logs | TODO | TODO | TODO | TODO | TODO | TODO |
 | Managed PostgreSQL host | Primary database | Account, locker, share-grant hash, event, session, and verification-token data | EU region where available; confirm | TODO | TODO | TODO | TODO | TODO |
 | Resend | Sign-in and guest-unlock email delivery | Recipient email, locker name, guest label, unlock time | TODO | TODO | TODO | TODO | TODO | TODO |
 | Upstash | Distributed rate limiting | Rate-limit keys derived from email, IP, resident, and token | TODO | TODO | TODO | TODO | TODO | TODO |

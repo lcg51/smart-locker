@@ -15,12 +15,16 @@ async function seedSession(input: {
   userId: string
   token: string
   expires?: Date
+  deviceLabel?: string
+  locationLabel?: string
 }) {
   return prisma.session.create({
     data: {
       userId: input.userId,
       sessionToken: input.token,
       expires: input.expires ?? new Date("2030-01-01T00:00:00.000Z"),
+      deviceLabel: input.deviceLabel,
+      locationLabel: input.locationLabel,
     },
   })
 }
@@ -68,8 +72,18 @@ describe("revokeOtherSessions", () => {
 describe("listActiveSessions", () => {
   it("lists active sessions newest first and identifies this device", async () => {
     const user = await seedUser("ana@example.com")
-    const current = await seedSession({ userId: user.id, token: "current" })
-    const other = await seedSession({ userId: user.id, token: "other" })
+    const current = await seedSession({
+      userId: user.id,
+      token: "current",
+      deviceLabel: "Safari on iOS",
+      locationLabel: "Madrid, ES",
+    })
+    const other = await seedSession({
+      userId: user.id,
+      token: "other",
+      deviceLabel: "Chrome on Windows",
+      locationLabel: "Barcelona, ES",
+    })
     const expired = await seedSession({
       userId: user.id,
       token: "expired",
@@ -87,8 +101,16 @@ describe("listActiveSessions", () => {
     const sessions = await listActiveSessions(user.id, current.sessionToken)
 
     expect(sessions.map((session) => session.id)).toEqual([other.id, current.id])
-    expect(sessions[0]).toMatchObject({ isCurrent: false })
-    expect(sessions[1]).toMatchObject({ isCurrent: true })
+    expect(sessions[0]).toMatchObject({
+      isCurrent: false,
+      deviceLabel: "Chrome on Windows",
+      locationLabel: "Barcelona, ES",
+    })
+    expect(sessions[1]).toMatchObject({
+      isCurrent: true,
+      deviceLabel: "Safari on iOS",
+      locationLabel: "Madrid, ES",
+    })
     expect(sessions.every((session) => session.id !== expired.id)).toBe(true)
     expect(sessions[0]).not.toHaveProperty("sessionToken")
   })

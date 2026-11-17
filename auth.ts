@@ -1,14 +1,13 @@
-import { PrismaAdapter } from "@auth/prisma-adapter"
 import NextAuth from "next-auth"
 import Resend from "next-auth/providers/resend"
+import { adapter } from "@/lib/auth/adapter"
 import { isEmailAllowed } from "@/lib/auth/allowlist"
-import { prisma } from "@/lib/db"
 import { getEnv } from "@/lib/env"
 
 const env = getEnv()
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter,
   session: { strategy: "database", maxAge: 30 * 24 * 60 * 60 },
   providers: [Resend({ from: env.EMAIL_FROM, apiKey: env.RESEND_API_KEY })],
   pages: { signIn: "/auth", verifyRequest: "/auth/check-email", error: "/auth/error" },

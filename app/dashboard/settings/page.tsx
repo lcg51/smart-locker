@@ -32,6 +32,8 @@ export default async function SettingsPage() {
     createdAt: formatSessionDate(session.createdAt),
     expires: formatSessionDate(session.expires),
     isCurrent: session.isCurrent,
+    deviceLabel: session.deviceLabel,
+    locationLabel: session.locationLabel,
   }))
 
   return (
