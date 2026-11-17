@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto"
 import { cookies } from "next/headers"
+import { sessionMetadataFromHeaders } from "@/lib/auth/session-metadata"
 import { prisma } from "@/lib/db"
 import { getEnv } from "@/lib/env"
 
@@ -31,8 +32,9 @@ export async function POST(request: Request): Promise<Response> {
 
   const sessionToken = randomBytes(32).toString("hex")
   const expires = new Date(Date.now() + SESSION_LIFETIME_MS)
+  const metadata = sessionMetadataFromHeaders((name) => request.headers.get(name))
   await prisma.session.create({
-    data: { sessionToken, userId: user.id, expires },
+    data: { sessionToken, userId: user.id, expires, ...metadata },
   })
 
   const cookieStore = await cookies()

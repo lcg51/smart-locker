@@ -21,6 +21,8 @@ export type SessionRow = {
   createdAt: string
   expires: string
   isCurrent: boolean
+  deviceLabel: string | null
+  locationLabel: string | null
 }
 
 export function SessionList({ sessions }: { sessions: SessionRow[] }) {
@@ -56,8 +58,12 @@ export function SessionList({ sessions }: { sessions: SessionRow[] }) {
                 </span>
               )}
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">Created {session.createdAt}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{session.deviceLabel ?? "Unknown device"}</p>
+            <p className="text-sm text-muted-foreground">Created {session.createdAt}</p>
             <p className="text-sm text-muted-foreground">Expires {session.expires}</p>
+            <p className="text-sm text-muted-foreground">
+              Approximate location: {session.locationLabel ?? "unavailable"}
+            </p>
           </li>
         ))}
       </ul>

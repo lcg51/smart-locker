@@ -79,7 +79,7 @@ Ask the resident to:
 5. Open the activity page and confirm the events appear.
 6. Open Settings → Appearance, switch to Dark, reload, and confirm it persists; then switch back to System.
 7. In iPhone Safari, use Share → Add to Home Screen, open the installed app, and confirm it starts at the dashboard. Turn the connection off and confirm the offline page explains that unlocking needs a connection.
-8. Sign in on a second browser, open Settings → Active sessions, revoke the other sessions, and confirm the second browser is signed out. Change the display name and confirm it persists after reload.
+8. Sign in on a second browser, open Settings → Active sessions, confirm the device and approximate location labels look plausible, revoke the other sessions, and confirm the second browser is signed out. Change the display name and confirm it persists after reload.
 
 ## 6. Guest check
 

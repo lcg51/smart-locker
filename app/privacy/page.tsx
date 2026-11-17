@@ -50,6 +50,7 @@ export default function PrivacyPage() {
               <li>Lock and unlock events, including which resident or guest link caused them.</li>
               <li>Share-link metadata: guest label, expiry, use count, and revocation time. The raw link is never stored; only a SHA-256 hash is kept.</li>
               <li>Hashed IP addresses for redemption abuse controls, and rate-limit keys for sign-in, sharing, and lock commands.</li>
+              <li>Coarse session metadata: a device label derived from your browser&apos;s user agent and an approximate city/country from the hosting provider&apos;s request headers. We do not store the raw user agent or IP address for these labels.</li>
               <li>Email delivery metadata from the email provider when a notification is sent.</li>
             </ul>
           </CardContent>
@@ -63,6 +64,7 @@ export default function PrivacyPage() {
             <ul className="list-disc space-y-1 pl-5">
               <li>To provide the service you signed up for: confirming lockers, unlocking them, and sharing temporary guest access.</li>
               <li>To keep the service secure: rate limiting, abuse prevention, and lock event history.</li>
+              <li>To help you recognize your active sessions from the device and approximate location you signed in from.</li>
               <li>To meet legal and accounting obligations that apply to the pilot operator.</li>
               <li>To send optional guest-unlock notifications when you enable them in Settings.</li>
             </ul>
@@ -80,7 +82,7 @@ export default function PrivacyPage() {
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>The pilot uses these processors under their data-processing terms:</p>
             <ul className="list-disc space-y-1 pl-5">
-              <li>Vercel for hosting and product analytics.</li>
+              <li>Vercel for hosting, request geo headers used for coarse session labels, and product analytics.</li>
               <li>A managed PostgreSQL provider for the application database, in an EU region where available.</li>
               <li>Resend for sign-in and guest-unlock email delivery.</li>
               <li>Upstash for distributed rate limiting when configured.</li>

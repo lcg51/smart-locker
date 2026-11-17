@@ -8,6 +8,8 @@ export type ActiveSession = {
   createdAt: Date
   expires: Date
   isCurrent: boolean
+  deviceLabel: string | null
+  locationLabel: string | null
 }
 
 export async function requireUser(): Promise<{ id: string; email: string }> {
@@ -55,6 +57,8 @@ export async function listActiveSessions(
       sessionToken: true,
       createdAt: true,
       expires: true,
+      deviceLabel: true,
+      locationLabel: true,
     },
   })
 
@@ -63,5 +67,7 @@ export async function listActiveSessions(
     createdAt: session.createdAt,
     expires: session.expires,
     isCurrent: currentToken !== null && session.sessionToken === currentToken,
+    deviceLabel: session.deviceLabel,
+    locationLabel: session.locationLabel,
   }))
 }
