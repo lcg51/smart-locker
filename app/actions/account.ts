@@ -3,8 +3,13 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { signOut } from "@/auth"
-import { requireUser } from "@/lib/auth/session"
+import {
+  getCurrentSessionToken,
+  requireUser,
+  revokeOtherSessions,
+} from "@/lib/auth/session"
 import { deleteAccount } from "@/lib/account/delete"
+import { updateDisplayName } from "@/lib/account/profile"
 import { prisma } from "@/lib/db"
 
 const guestUnlockEmailsSchema = z.object({
@@ -29,4 +34,22 @@ export async function deleteAccountAction(): Promise<void> {
   const user = await requireUser()
   await deleteAccount(user.id)
   await signOut({ redirectTo: "/auth" })
+}
+
+export async function updateDisplayNameAction(formData: FormData): Promise<boolean> {
+  const user = await requireUser()
+  const name = formData.get("name")
+  if (typeof name !== "string") return false
+
+  const updated = await updateDisplayName({ userId: user.id, name })
+  if (updated) revalidatePath("/dashboard/settings")
+  return updated
+}
+
+export async function revokeOtherSessionsAction(): Promise<{ revoked: number }> {
+  const user = await requireUser()
+  const currentToken = await getCurrentSessionToken()
+  const result = await revokeOtherSessions({ userId: user.id, currentToken })
+  revalidatePath("/dashboard/settings")
+  return result
 }
