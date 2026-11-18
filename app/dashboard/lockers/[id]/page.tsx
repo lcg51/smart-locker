@@ -5,11 +5,12 @@ import { ActiveShares } from "@/components/active-shares"
 import { LockerActivity } from "@/components/locker-activity"
 import { LockerDetailControls } from "@/components/locker-detail-controls"
 import { ShareDialog } from "@/components/share-dialog"
+import { ShareHistory } from "@/components/share-history"
 import { Button } from "@/components/ui/button"
 import { requireUser } from "@/lib/auth/session"
 import { listLockEvents } from "@/lib/events/queries"
 import { getLockerForUser } from "@/lib/lockers/queries"
-import { listActiveGrants } from "@/lib/shares/service"
+import { listActiveGrants, listShareHistory } from "@/lib/shares/service"
 
 export default async function LockerDetailsPage({
   params,
@@ -21,9 +22,10 @@ export default async function LockerDetailsPage({
   const locker = await getLockerForUser(user.id, id)
   if (!locker) notFound()
 
-  const [grants, { events }] = await Promise.all([
+  const [grants, { events }, shareHistory] = await Promise.all([
     listActiveGrants({ userId: user.id, lockerId: locker.id }),
     listLockEvents({ userId: user.id, lockerId: locker.id, limit: 10 }),
+    listShareHistory({ userId: user.id, lockerId: locker.id }),
   ])
   const status = locker.status === "LOCKED" ? "Locked" : locker.status === "UNLOCKED" ? "Unlocked" : "Status unknown"
   const StatusIcon = locker.status === "LOCKED" ? LockKeyhole : LockKeyholeOpen
@@ -64,6 +66,8 @@ export default async function LockerDetailsPage({
         </div>
         <ActiveShares grants={grants} />
       </section>
+
+      <ShareHistory events={shareHistory} />
 
       <LockerActivity events={events} lockerId={locker.id} />
     </main>

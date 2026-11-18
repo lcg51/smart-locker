@@ -109,8 +109,27 @@ model ShareGrant {
   revokedAt       DateTime?
   createdAt       DateTime   @default(now())
   events          LockEvent[]
+  history         ShareGrantEvent[]
 
   @@index([lockerId])
+}
+
+enum ShareAction {
+  CREATED
+  REVOKED
+  EXTENDED
+}
+
+model ShareGrantEvent {
+  id        String      @id @default(cuid())
+  grantId   String
+  grant     ShareGrant  @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  actorType ActorType
+  action    ShareAction
+  detail    String?
+  createdAt DateTime    @default(now())
+
+  @@index([grantId, createdAt])
 }
 
 model LockEvent {

@@ -4,7 +4,7 @@ import { resetEnvCacheForTests } from "@/lib/env"
 import { provisionApartment } from "@/lib/ops/provision"
 import { createInMemoryRateLimiter } from "@/lib/rate-limit"
 import { redeemShareToken, resolveShareToken } from "@/lib/shares/redeem"
-import { createShareGrant, listActiveGrants, revokeShareGrant } from "@/lib/shares/service"
+import { createShareGrant, extendShareGrant, listActiveGrants, listShareHistory, revokeShareGrant } from "@/lib/shares/service"
 import { hashShareToken } from "@/lib/shares/token"
 import { resetDb } from "@/tests/helpers/db"
 
@@ -37,6 +37,27 @@ describe("createShareGrant", () => {
     expect(grant.tokenHash).not.toBe(token)
     expect(grant.maxUses).toBe(5)
     expect(grant.expiresAt.getTime() - grant.createdAt.getTime()).toBeGreaterThanOrEqual(3_599_000)
+  })
+
+  it("records a creation event", async () => {
+    const { userId, locker } = await seed()
+    const now = new Date("2026-11-18T10:00:00.000Z")
+    const { grant } = await createShareGrant({
+      userId,
+      lockerId: locker.id,
+      now,
+      guestLabel: "Cleaner",
+    })
+
+    const event = await prisma.shareGrantEvent.findFirstOrThrow({
+      where: { grantId: grant.id },
+    })
+    expect(event).toMatchObject({
+      action: "CREATED",
+      actorType: "OWNER",
+      detail: "60 minutes, 5 uses",
+      createdAt: now,
+    })
   })
 
   it("rejects durations outside 15 minutes through 24 hours and invalid use counts", async () => {
@@ -129,6 +150,13 @@ describe("share grants", () => {
     await expect(revokeShareGrant({ userId, grantId: grant.id })).resolves.toBe(true)
     await expect(revokeShareGrant({ userId, grantId: grant.id })).resolves.toBe(false)
     await expect(listActiveGrants({ userId, lockerId: locker.id })).resolves.toEqual([])
+
+    const events = await prisma.shareGrantEvent.findMany({
+      where: { grantId: grant.id },
+      orderBy: { createdAt: "asc" },
+      select: { action: true },
+    })
+    expect(events.map((event) => event.action)).toEqual(["CREATED", "REVOKED"])
   })
 
   it("lists only active grants for the owner and locker, newest first", async () => {
@@ -165,5 +193,63 @@ describe("share grants", () => {
     ])
     expect(activeGrants[0]).not.toHaveProperty("tokenHash")
     expect(activeGrants[0]).not.toHaveProperty("createdByUserId")
+  })
+})
+
+describe("listShareHistory", () => {
+  it("returns owner-scoped lifecycle events with guest labels and no token data", async () => {
+    const { userId, locker } = await seed()
+    const now = new Date("2026-11-18T10:00:00.000Z")
+
+    const first = await createShareGrant({
+      userId,
+      lockerId: locker.id,
+      now,
+      guestLabel: "Cleaner",
+    })
+    await extendShareGrant({
+      userId,
+      grantId: first.grant.id,
+      additionalMinutes: 30,
+      now: new Date(now.getTime() + 10 * 60_000),
+    })
+    const second = await createShareGrant({
+      userId,
+      lockerId: locker.id,
+      now,
+      guestLabel: "Dog walker",
+    })
+    await revokeShareGrant({ userId, grantId: second.grant.id })
+
+    const history = await listShareHistory({ userId, lockerId: locker.id })
+
+    expect(history).toHaveLength(4)
+    expect(history.map((event) => event.action)).toEqual(
+      expect.arrayContaining(["CREATED", "EXTENDED", "REVOKED"]),
+    )
+    expect(history.find((event) => event.action === "EXTENDED")).toMatchObject({
+      detail: "+30 minutes",
+      grant: { guestLabel: "Cleaner" },
+    })
+    expect(history.find((event) => event.action === "REVOKED")).toMatchObject({
+      grant: { guestLabel: "Dog walker" },
+    })
+    expect(history[0]).not.toHaveProperty("grantId")
+    expect(history[0]).not.toHaveProperty("tokenHash")
+  })
+
+  it("does not include another resident's locker history", async () => {
+    const { userId, locker } = await seed()
+    const beto = await provisionApartment({
+      email: "beto@example.com",
+      gatewayId: "gw-beto",
+      lockers: [{ name: "Hall", vendor: "mock", vendorLockId: "beto-lock" }],
+    })
+    const betoLocker = await prisma.locker.findFirstOrThrow({
+      where: { userId: beto.userId },
+    })
+    await createShareGrant({ userId: beto.userId, lockerId: betoLocker.id })
+
+    await expect(listShareHistory({ userId, lockerId: locker.id })).resolves.toEqual([])
   })
 })

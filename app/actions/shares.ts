@@ -3,11 +3,15 @@
 import { revalidatePath } from "next/cache"
 import { getEnv } from "@/lib/env"
 import { requireUser } from "@/lib/auth/session"
-import { createShareGrant, revokeShareGrant, ShareLimitError } from "@/lib/shares/service"
+import { createShareGrant, extendShareGrant, revokeShareGrant, ShareLimitError } from "@/lib/shares/service"
 
 export type CreateShareResult =
   | { ok: true; url: string; grantId: string }
   | { ok: false; error: "rate_limited" | "share_limit_reached" | "sharing_disabled" | "invalid_input" }
+
+export type ExtendShareResult =
+  | { ok: true }
+  | { ok: false; error: "not_found" | "revoked" | "expired" | "invalid_extension" }
 
 export async function createShare(
   lockerId: string,
@@ -46,4 +50,31 @@ export async function revokeShare(grantId: string): Promise<boolean> {
   const revoked = await revokeShareGrant({ userId: user.id, grantId })
   if (revoked) revalidatePath("/dashboard/lockers/[id]", "page")
   return revoked
+}
+
+export async function extendShare(
+  grantId: string,
+  formData: FormData,
+): Promise<ExtendShareResult> {
+  const user = await requireUser()
+  const minutesValue = formData.get("additionalMinutes")
+  const usesValue = formData.get("additionalUses")
+  const additionalMinutes = typeof minutesValue === "string" && minutesValue.trim() !== ""
+    ? Number(minutesValue)
+    : undefined
+  const additionalUses = typeof usesValue === "string" && usesValue.trim() !== ""
+    ? Number(usesValue)
+    : undefined
+
+  const result = await extendShareGrant({
+    userId: user.id,
+    grantId,
+    additionalMinutes,
+    additionalUses,
+  })
+
+  if (!result.ok) return { ok: false, error: result.error }
+
+  revalidatePath(`/dashboard/lockers/${result.grant.lockerId}`)
+  return { ok: true }
 }
