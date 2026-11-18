@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { CalendarClock, Users } from "lucide-react"
 import { revokeShare } from "@/app/actions/shares"
+import { ExtendShareDialog } from "@/components/extend-share-dialog"
 import { Button } from "@/components/ui/button"
 import type { ActiveShareGrant } from "@/lib/shares/service"
 import {
@@ -66,28 +67,31 @@ export function ActiveShares({ grants }: { grants: ActiveShareGrant[] }) {
             </div>
           </div>
 
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button className="min-h-11 shrink-0" disabled={isPending} type="button" variant="outline">
-                Revoke
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Revoke this share link?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {grant.guestLabel || "This guest"} will no longer be able to unlock {" "}
-                  {grant.guestLabel ? "this locker" : "the locker"} with this link.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel className="min-h-11">Keep link</AlertDialogCancel>
-                <AlertDialogAction className="min-h-11" onClick={() => handleRevoke(grant.id)}>
-                  {isPending ? "Revoking…" : "Revoke link"}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <div className="flex flex-wrap gap-2 sm:justify-end">
+            <ExtendShareDialog grant={grant} />
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button className="min-h-11 shrink-0" disabled={isPending} type="button" variant="outline">
+                  Revoke
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Revoke this share link?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {grant.guestLabel || "This guest"} will no longer be able to unlock {" "}
+                    {grant.guestLabel ? "this locker" : "the locker"} with this link.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="min-h-11">Keep link</AlertDialogCancel>
+                  <AlertDialogAction className="min-h-11" onClick={() => handleRevoke(grant.id)}>
+                    {isPending ? "Revoking…" : "Revoke link"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </article>
       ))}
     </div>
