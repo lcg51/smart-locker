@@ -2,7 +2,7 @@
 
 Date: 2026-11-03
 Status: Approved for planning (user, 2026-11-03)
-Spec of record for Tasks 16–30.
+Spec of record for Tasks 16–31.
 
 ## Intent
 
@@ -304,6 +304,23 @@ bug, not a feature request, and it is Task 16.
 - Use the existing test-session route and Prisma fixtures; do not add a new
   production backdoor.
 
+### 16. Form success toasts (Task 31)
+
+- Use the existing Radix toast stack: `toast` from `hooks/use-toast` and the
+  single `<Toaster />` already mounted in `app/layout.tsx`. Do not add Sonner.
+- Successful form and settings actions confirm with a toast titled with the
+  outcome; validation and failure messages stay inline so they are not missed.
+- Convert the success feedback in the profile-name form, locker rename,
+  guest-email toggle, PIN set/remove, revoke-other-sessions, and share-link
+  extension flows.
+- Do not toast redirect-only flows such as magic-link sign-in, sign-out, or
+  account deletion, or flows whose success is already the created link/copy
+  state.
+- Exact success copy: `Display name updated.`, `Locker name saved.`,
+  `Preference saved.`, `PIN set for this device.`, `Device PIN removed.`,
+  `Other sessions revoked.`, `No other sessions to revoke.`, and
+  `Share link extended.`.
+
 ## Task map
 
 | # | Task | Phase | Depends on | Acceptance in one line |
@@ -323,13 +340,16 @@ bug, not a feature request, and it is Task 16.
 | 28 | Session management and profile editing | 2 | 04, 09 | Residents can revoke other sessions and edit their display name. |
 | 29 | Share lifecycle audit and link extension | 2 | 06, 08 | Share create/revoke/extend events are visible and live links can be extended safely. |
 | 30 | Accessibility and security E2E coverage | 2 | 12, 14, 16, 17, 22 | Axe and the critical security paths run in the E2E suite. |
+| 31 | Form success toast notifications | 2 | 05, 06, 08, 09, 10, 22, 28, 29 | Successful settings/form actions confirm with a toast; errors stay inline. |
 
 ## Sequencing
 
 - Tasks 16–21 are the pilot-critical set. Do them before inviting residents.
   Task 18 can start immediately because it only depends on the merged tooling.
-- Tasks 22–24, 26, and 28–30 can run during the pilot, in the order that matches
+- Tasks 22–24, 26, and 28–31 can run during the pilot, in the order that matches
   operator feedback. Task 25 lands after Task 15 has real gateway timestamps.
+- Task 31 runs after Task 29 so the share-extension dialog exists. It is UX
+  polish and should not delay the pilot-critical set.
 - Task 27 is Phase 3. Do not start it until the English pilot-critical and UX
   work is stable.
 - Task 15 remains blocked on TTLock credentials and a test lock. Do not replace
