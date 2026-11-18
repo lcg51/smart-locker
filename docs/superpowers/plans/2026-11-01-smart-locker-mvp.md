@@ -61,7 +61,7 @@ Work the tasks in order. Each file is self-contained: it lists its own files, in
 | 14 | [Light, dark, and system appearance](2026-11-01-smart-locker-mvp/task-14-dark-mode.md) | Phase 1.5 | Task 13 |
 | 15 | [TTLock provider and credential encryption (Phase 2)](2026-11-01-smart-locker-mvp/task-15-ttlock-provider.md) | Phase 2 | Task 01, Task 02, Task 03 |
 
-### Pilot hardening and growth backlog (Tasks 16–30)
+### Pilot hardening and growth backlog (Tasks 16–31)
 
 The [pilot hardening and growth design](../specs/2026-11-03-smart-locker-pilot-hardening-design.md)
 is the spec of record for these tasks. Tasks 16–21 are the pilot-critical set;
@@ -85,6 +85,7 @@ provider task and does not move earlier.
 | 28 | [Session management and profile editing](2026-11-01-smart-locker-mvp/task-28-session-management.md) | Phase 2 | Task 04, Task 09 |
 | 29 | [Share lifecycle audit and link extension](2026-11-01-smart-locker-mvp/task-29-share-lifecycle.md) | Phase 2 | Task 06, Task 08 |
 | 30 | [Accessibility and security E2E coverage](2026-11-01-smart-locker-mvp/task-30-accessibility-security-e2e.md) | Phase 2 | Task 12, Task 14, Task 16, Task 17, Task 22 |
+| 31 | [Form success toast notifications](2026-11-01-smart-locker-mvp/task-31-form-success-toasts.md) | Phase 2 | Task 05, Task 06, Task 08, Task 09, Task 10, Task 22, Task 28, Task 29 |
 
 **Backlog Review Focus**
 
@@ -102,6 +103,9 @@ provider task and does not move earlier.
 5. **Spanish copy is missing on a surface.** Every dictionary key must exist in
    both languages, and the guest page must follow `Accept-Language` with no
    language control. Pinned in Task 27.
+6. **A success toast hides a validation error or is lost on navigation.** Errors
+   must stay inline, instructional text must stay visible, and redirect-only
+   actions must not pretend a toast will survive. Pinned in Task 31.
 
 ## Dependency order
 
@@ -123,9 +127,10 @@ All UI tasks -> Task 27 (Phase 3)
 Task 04, 09 -> Task 28
 Task 06, 08 -> Task 29
 Task 12, 14, 16, 17, 22 -> Task 30
+Task 05, 06, 08, 09, 10, 22, 28, 29 -> Task 31
 ```
 
-Tasks 02, 03, and 10 can run in parallel once Task 01 lands. Tasks 06 and 10 can run in parallel once Task 05 lands. Everything else is sequential because it consumes the previous task's interfaces. Tasks 22–24, 26, and 28–30 can run during the pilot; Task 25 waits for Task 15's real gateway timestamps; Task 27 waits for the English UI to be stable.
+Tasks 02, 03, and 10 can run in parallel once Task 01 lands. Tasks 06 and 10 can run in parallel once Task 05 lands. Everything else is sequential because it consumes the previous task's interfaces. Tasks 22–24, 26, and 28–31 can run during the pilot; Task 25 waits for Task 15's real gateway timestamps; Task 27 waits for the English UI to be stable.
 
 ## Execution notes
 
@@ -135,4 +140,5 @@ Tasks 02, 03, and 10 can run in parallel once Task 01 lands. Tasks 06 and 10 can
 - Complete Tasks 16–21 before inviting pilot residents. Task 16 fixes a false auto-relock promise; do not treat it as optional polish.
 - Phase 1 ships on `MockLockProvider`; do not start Task 15 until a TTLock developer account and a test lock exist.
 - Task 25 can land with null-safe mock data, but recheck it after Task 15 sets real `gatewayLastSeenAt` values.
+- Run Task 31 after Task 29 so the share-extension dialog exists; keep validation and failure messages inline.
 - Run each task's final verification command and read its output before claiming the task complete.
