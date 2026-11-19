@@ -5,24 +5,22 @@ import { updateDisplayNameAction } from "@/app/actions/account"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { toast } from "@/hooks/use-toast"
 
 export function ProfileNameForm({ currentName }: { currentName: string }) {
-  const [message, setMessage] = useState<string | null>(null)
-  const [failed, setFailed] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   function handleSubmit(formData: FormData) {
-    setMessage(null)
-    setFailed(false)
+    setError(null)
     startTransition(async () => {
       const updated = await updateDisplayNameAction(formData)
       if (updated) {
-        setMessage("Display name updated.")
+        toast({ title: "Display name updated." })
         return
       }
 
-      setFailed(true)
-      setMessage("Enter a name between 1 and 40 characters.")
+      setError("Enter a name between 1 and 40 characters.")
     })
   }
 
@@ -44,13 +42,9 @@ export function ProfileNameForm({ currentName }: { currentName: string }) {
       <Button className="min-h-11" disabled={isPending} type="submit" variant="outline">
         {isPending ? "Saving…" : "Save name"}
       </Button>
-      {message && (
-        <p
-          aria-live="polite"
-          className={failed ? "text-sm text-destructive-text" : "text-sm text-muted-foreground"}
-          role={failed ? "alert" : "status"}
-        >
-          {message}
+      {error && (
+        <p aria-live="polite" className="text-sm text-destructive-text" role="alert">
+          {error}
         </p>
       )}
     </form>
