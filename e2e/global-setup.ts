@@ -18,6 +18,12 @@ export default async function globalSetup(): Promise<void> {
     lockers: [{ name: "Kitchen", vendor: "mock", vendorLockId: "e2e-lock-1" }],
   })
 
+  await provisionApartment({
+    email: "toast@example.com",
+    gatewayId: "gw-toast",
+    lockers: [{ name: "Toast locker", vendor: "mock", vendorLockId: "toast-lock-1" }],
+  })
+
   await prisma.user.update({
     where: { id: userId },
     data: { guestUnlockEmails: false },

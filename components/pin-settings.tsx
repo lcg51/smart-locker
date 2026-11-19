@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { PinPad } from "@/components/pin-pad"
+import { toast } from "@/hooks/use-toast"
 import {
   clearPinState,
   generatePinSalt,
@@ -20,7 +21,6 @@ export function PinSettings() {
   const [step, setStep] = useState<SetupStep>("idle")
   const [firstPin, setFirstPin] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
@@ -39,14 +39,12 @@ export function PinSettings() {
     setStep("enter")
     setFirstPin(null)
     setError(null)
-    setMessage("Enter a new 4-digit PIN.")
   }
 
   function cancelSetup() {
     setStep("idle")
     setFirstPin(null)
     setError(null)
-    setMessage(null)
   }
 
   function handlePinComplete(pin: string) {
@@ -54,7 +52,6 @@ export function PinSettings() {
     if (step === "enter") {
       setFirstPin(pin)
       setStep("confirm")
-      setMessage("Enter the same PIN again to confirm it.")
       return
     }
 
@@ -63,7 +60,6 @@ export function PinSettings() {
       setFirstPin(null)
       setStep("enter")
       setError("Those PINs didn’t match. Start again.")
-      setMessage("Enter a new 4-digit PIN.")
       return
     }
 
@@ -75,11 +71,14 @@ export function PinSettings() {
         setHasPin(true)
         setStep("idle")
         setFirstPin(null)
-        setMessage("PIN set for this device.")
+        toast({ title: "PIN set for this device." })
         try {
           window.sessionStorage.setItem(PIN_UNLOCKED_STORAGE_KEY, "1")
         } catch {
-          setMessage("PIN saved. You’ll need to enter it again after refreshing this tab.")
+          toast({
+            title: "PIN saved.",
+            description: "You’ll need to enter it again after refreshing this tab.",
+          })
         }
       } catch {
         setError("PIN couldn’t be saved. Check device storage and try again.")
@@ -91,14 +90,13 @@ export function PinSettings() {
     const cleared = clearPinState()
     if (!cleared.pinRemoved) {
       setError("Couldn’t remove the PIN from this browser. Check device storage and try again.")
-      setMessage(null)
       return
     }
     setHasPin(false)
     setStep("idle")
     setFirstPin(null)
     setError(null)
-    setMessage("Device PIN removed.")
+    toast({ title: "Device PIN removed." })
   }
 
   return (
@@ -139,7 +137,6 @@ export function PinSettings() {
       )}
 
       {error && <p aria-live="polite" className="text-sm text-destructive-text" role="alert">{error}</p>}
-      {message && step === "idle" && <p aria-live="polite" className="text-sm text-muted-foreground" role="status">{message}</p>}
     </div>
   )
 }

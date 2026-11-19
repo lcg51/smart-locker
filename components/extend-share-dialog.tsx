@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { toast } from "@/hooks/use-toast"
 import { formatEventTime } from "@/lib/events/presentation"
 import type { ActiveShareGrant } from "@/lib/shares/service"
 
@@ -46,6 +47,7 @@ export function ExtendShareDialog({ grant }: { grant: ActiveShareGrant }) {
           setError(errorMessage(result.error))
           return
         }
+        toast({ title: "Share link extended." })
         setOpen(false)
         router.refresh()
       } catch {

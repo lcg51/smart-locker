@@ -7,6 +7,7 @@ import { confirmLockerAction, renameLockerAction } from "@/app/actions/lockers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { canConfirmLockerName, canEditLockerName } from "@/lib/lockers/onboarding"
+import { toast } from "@/hooks/use-toast"
 
 export function LockerNameForm({
   lockerId,
@@ -20,24 +21,24 @@ export function LockerNameForm({
   const router = useRouter()
   const [name, setName] = useState(initialName)
   const [savedName, setSavedName] = useState(initialName)
-  const [saveMessage, setSaveMessage] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [confirmMessage, setConfirmMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   function handleRename(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
-    setSaveMessage(null)
+    setSaveError(null)
     startTransition(async () => {
       const renamed = await renameLockerAction(lockerId, formData)
       if (!renamed) {
-        setSaveMessage("Enter a name between 1 and 40 characters.")
+        setSaveError("Enter a name between 1 and 40 characters.")
         return
       }
       const saved = String(formData.get("name") ?? "").trim()
       setName(saved)
       setSavedName(saved)
-      setSaveMessage("Name saved.")
+      toast({ title: "Locker name saved." })
       router.refresh()
     })
   }
@@ -77,7 +78,7 @@ export function LockerNameForm({
             <Save aria-hidden="true" className="size-4" />
             {isPending ? "Saving…" : "Save name"}
           </Button>
-          {saveMessage && <p aria-live="polite" className="text-sm text-muted-foreground" role="status">{saveMessage}</p>}
+          {saveError && <p aria-live="polite" className="text-sm text-destructive-text" role="alert">{saveError}</p>}
         </div>
       </form>
 

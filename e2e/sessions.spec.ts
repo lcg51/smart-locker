@@ -26,7 +26,7 @@ test("a resident can revoke another browser session", async ({ browser }) => {
 
     await page.getByRole("button", { name: "Revoke other sessions" }).click()
     await page.getByRole("button", { name: "Revoke other sessions", exact: true }).last().click()
-    await expect(page.getByText("Other sessions revoked.")).toBeVisible()
+    await expect(page.getByText("Other sessions revoked.", { exact: true })).toBeVisible()
 
     const otherPage = await second.newPage()
     await otherPage.goto("/dashboard")

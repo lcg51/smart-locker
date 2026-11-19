@@ -12,6 +12,7 @@ The MVP runs on a mock lock provider so the product flow can be built and tested
 - Expiring, use-limited share links that guests redeem without signing in.
 - OS share sheet and browser-generated QR code for guest links; the QR never leaves the browser or reaches analytics.
 - Share-link lifecycle history and safe extension of live links, capped at 24 hours and 50 unlocks.
+- Successful settings and form actions confirm with a toast; validation and failure messages stay inline.
 - Guest unlocks relock automatically after 30 seconds; owner unlocks stay manual.
 - Owner activity history and optional guest-unlock email notifications.
 - Account settings, guest-email preference, display-name editing, active-session review with device and approximate location, and hard account deletion.

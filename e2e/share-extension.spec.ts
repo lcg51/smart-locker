@@ -24,6 +24,7 @@ test("an owner can extend a live share link", async ({ page, context }) => {
   await page.getByLabel("Additional unlocks").fill("2")
   await page.getByRole("button", { name: "Extend link" }).click()
 
+  await expect(page.getByText("Share link extended.", { exact: true })).toBeVisible()
   await expect(page.getByRole("main").getByText("0 of 7 unlocks used")).toBeVisible()
   await expect(page.getByText("Extended", { exact: true })).toBeVisible()
   await expect(page.getByText("+30 minutes, +2 uses")).toBeVisible()

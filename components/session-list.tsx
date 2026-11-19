@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { revokeOtherSessionsAction } from "@/app/actions/account"
 import { Button } from "@/components/ui/button"
+import { toast } from "@/hooks/use-toast"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,17 +28,17 @@ export type SessionRow = {
 
 export function SessionList({ sessions }: { sessions: SessionRow[] }) {
   const router = useRouter()
-  const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   function handleRevoke() {
-    setMessage(null)
     setError(null)
     startTransition(async () => {
       try {
         const result = await revokeOtherSessionsAction()
-        setMessage(result.revoked > 0 ? "Other sessions revoked." : "No other sessions to revoke.")
+        toast({
+          title: result.revoked > 0 ? "Other sessions revoked." : "No other sessions to revoke.",
+        })
         router.refresh()
       } catch {
         setError("Couldn't revoke other sessions. Try again.")
@@ -90,7 +91,6 @@ export function SessionList({ sessions }: { sessions: SessionRow[] }) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {message && <p aria-live="polite" className="text-sm text-muted-foreground" role="status">{message}</p>}
       {error && <p aria-live="polite" className="text-sm text-destructive-text" role="alert">{error}</p>}
     </div>
   )

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { setGuestUnlockEmails } from "@/app/actions/account"
 import { Switch } from "@/components/ui/switch"
+import { toast } from "@/hooks/use-toast"
 
 export function GuestUnlockEmailToggle({
   userId,
@@ -13,19 +14,17 @@ export function GuestUnlockEmailToggle({
 }) {
   const [enabled, setEnabled] = useState(initialEnabled)
   const [error, setError] = useState<string | null>(null)
-  const [saved, setSaved] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   function handleChange(nextEnabled: boolean) {
     const previousEnabled = enabled
     setEnabled(nextEnabled)
     setError(null)
-    setSaved(false)
 
     startTransition(async () => {
       try {
         await setGuestUnlockEmails(userId, nextEnabled)
-        setSaved(true)
+        toast({ title: "Preference saved." })
       } catch {
         setEnabled(previousEnabled)
         setError("Couldn't save this preference. Try again.")
@@ -42,8 +41,6 @@ export function GuestUnlockEmailToggle({
         </p>
         {error ? (
           <p aria-live="polite" className="text-sm text-destructive-text" role="alert">{error}</p>
-        ) : saved ? (
-          <p aria-live="polite" className="text-sm text-muted-foreground" role="status">Preference saved.</p>
         ) : isPending ? (
           <p aria-live="polite" className="text-sm text-muted-foreground" role="status">Saving…</p>
         ) : null}
