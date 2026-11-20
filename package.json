@@ -22,7 +22,8 @@
     "provision": "dotenv -e .env.local -e .env -- tsx scripts/provision.ts",
     "bulk-revoke": "dotenv -e .env.local -e .env -- tsx scripts/bulk-revoke.ts",
     "icons": "tsx scripts/generate-pwa-icons.ts",
-    "metrics": "dotenv -e .env.local -e .env -- tsx scripts/pilot-metrics.ts"
+    "metrics": "dotenv -e .env.local -e .env -- tsx scripts/pilot-metrics.ts",
+    "seed-ttlock": "dotenv -e .env.local -e .env -- tsx scripts/seed-vendor-credential.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

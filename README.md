@@ -109,9 +109,10 @@ CI pins Node 22 (`.nvmrc`) and pnpm 12.16.1 (`packageManager`). Both jobs run Po
 | `RESEND_API_KEY` | Resend API key. |
 | `PRIVACY_CONTACT_EMAIL` | Monitored contact address shown in the privacy notice; required. |
 | `LOCK_PROVIDER` | `mock` (default) or `ttlock`. |
-| `TTLOCK_API_BASE` | TTLock API base URL, Phase 2. |
-| `TTLOCK_ACCESS_TOKEN` | TTLock access token, Phase 2. |
-| `CREDENTIAL_ENCRYPTION_KEY` | 64 hex characters for vendor credential encryption, Phase 2. |
+| `TTLOCK_API_URL` | TTLock Open Platform API base. EU developer accounts use `https://euapi.ttlock.com`. |
+| `TTLOCK_CLIENT_ID` / `TTLOCK_CLIENT_SECRET` | Developer application credentials from the TTLock Open Platform. |
+| `TTLOCK_MAIL` / `TTLOCK_PASSWORD` | TTLock **app** account that owns the locks (not the developer account). `pnpm seed-ttlock` uses them once to obtain and store an encrypted token. |
+| `CREDENTIAL_ENCRYPTION_KEY` | 64 hex characters that encrypt the stored TTLock token. Keep it with the deployment secrets. |
 | `UPSTASH_REDIS_REST_URL` | Optional; enables distributed rate limiting for sign-in, shares, and lock commands. |
 | `UPSTASH_REDIS_REST_TOKEN` | Optional; required with the Upstash URL. |
 | `RELOCK_SECONDS` | Guest relock delay in seconds; defaults to `30`. |
