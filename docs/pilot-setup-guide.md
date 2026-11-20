@@ -40,6 +40,7 @@ with `TTLOCK_ACCESS_TOKEN` and `CREDENTIAL_ENCRYPTION_KEY` set. The script does 
 - Rate limits: magic links 5 per 10 minutes per email and 20 per 10 minutes per IP; share creation 10 per hour per resident and 20 active links per locker; owner commands 30 per minute per resident; guest redemption 10 per minute per IP and 20 per minute per token.
 - Keep `LOCK_PROVIDER=mock` until hardware and Task 15 are ready.
 - Treat the CI gate as required before merging to `dev`: every PR runs lint, typecheck, unit tests, build, and E2E. The `e2e` job uses only the `smart_locker_test` database and must never receive a pilot `DATABASE_URL`.
+- Before inviting residents, confirm the latest `dev` passes `pnpm test:e2e e2e/security.spec.ts e2e/accessibility.spec.ts` against the test database. These specs cover expired, revoked, and one-use links, cross-resident 404s, guest-page disclosure and headers, and serious or critical axe violations. Confirm `beto@example.com` exists only in the test seed (`e2e/global-setup.ts`) and never in the pilot database.
 
 ## 4. Provision an apartment
 

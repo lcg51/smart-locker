@@ -24,6 +24,16 @@ export default async function globalSetup(): Promise<void> {
     lockers: [{ name: "Toast locker", vendor: "mock", vendorLockId: "toast-lock-1" }],
   })
 
+  const beto = await provisionApartment({
+    email: "beto@example.com",
+    gatewayId: "gw-beto",
+    lockers: [{ name: "Balcony", vendor: "mock", vendorLockId: "beto-lock-1" }],
+  })
+  await prisma.locker.updateMany({
+    where: { userId: beto.userId },
+    data: { confirmedAt: new Date() },
+  })
+
   await prisma.user.update({
     where: { id: userId },
     data: { guestUnlockEmails: false },
