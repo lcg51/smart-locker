@@ -92,6 +92,8 @@ provider task and does not move earlier.
 
 **Task 33 status:** evaluated 2026-11-21. Proposed no-go for the pilot; the free tier is 30,000 calls per month per application, and local Bluetooth drops the guest link, server relock, and history. Decision pending owner sign-off: [ttlock-local-bluetooth.md](../../decisions/ttlock-local-bluetooth.md).
 
+**Task 34 status:** evaluated 2026-11-21. Proposed no-go for the pilot; the TTLock licence has no public price, the on-premise stack is not a drop-in replacement, and the cloud free tier covers a pilot. Decision pending a TTLock quote and owner sign-off: [ttlock-on-premise.md](../../decisions/ttlock-on-premise.md).
+
 **Backlog Review Focus**
 
 1. **A guest closes the tab before the 30-second timer.** The locker must still
