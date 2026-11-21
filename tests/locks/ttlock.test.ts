@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
+import { QuotaExceededError } from "@/lib/locks/quota"
 import { TTLockProvider } from "@/lib/locks/ttlock"
 
 function fakeClient(overrides: { post?: () => Promise<unknown>; get?: () => Promise<unknown> } = {}) {
@@ -12,13 +13,13 @@ describe("TTLockProvider", () => {
   it("maps a successful unlock response", async () => {
     const client = fakeClient()
     await expect(new TTLockProvider(client).unlock("42")).resolves.toEqual({ success: true })
-    expect(client.post).toHaveBeenCalledWith("/v3/lock/unlock", { lockId: 42 })
+    expect(client.post).toHaveBeenCalledWith("/v3/lock/unlock", { lockId: 42 }, "command")
   })
 
   it("maps a successful lock response", async () => {
     const client = fakeClient()
     await expect(new TTLockProvider(client).lock("42")).resolves.toEqual({ success: true })
-    expect(client.post).toHaveBeenCalledWith("/v3/lock/lock", { lockId: 42 })
+    expect(client.post).toHaveBeenCalledWith("/v3/lock/lock", { lockId: 42 }, "command")
   })
 
   it("maps a vendor error to an error code", async () => {
@@ -47,7 +48,7 @@ describe("TTLockProvider", () => {
       batteryLevel: null,
       online: true,
     })
-    expect(client.get).toHaveBeenCalledWith("/v3/lock/queryOpenState", { lockId: 42 })
+    expect(client.get).toHaveBeenCalledWith("/v3/lock/queryOpenState", { lockId: 42 }, "state")
   })
 
   it("reports an unknown state when the lock answers 2", async () => {
@@ -66,6 +67,25 @@ describe("TTLockProvider", () => {
       batteryLevel: null,
       online: false,
     })
+  })
+
+  it("maps a quota pause to a quota error instead of a network error", async () => {
+    const client = {
+      post: vi.fn(async () => { throw new QuotaExceededError("hard_limited") }),
+      get: vi.fn(),
+    }
+    await expect(new TTLockProvider(client).unlock("42")).resolves.toEqual({
+      success: false,
+      errorCode: "quota_exceeded",
+    })
+  })
+
+  it("surfaces a quota pause from a state read", async () => {
+    const client = {
+      post: vi.fn(),
+      get: vi.fn(async () => { throw new QuotaExceededError("soft_limited") }),
+    }
+    await expect(new TTLockProvider(client).getState("42")).rejects.toBeInstanceOf(QuotaExceededError)
   })
 
   it("does not provision locks through the API", async () => {

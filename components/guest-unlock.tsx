@@ -32,6 +32,7 @@ function secondsUntil(deadline: number): number {
 
 function getErrorMessage(result: Extract<GuestRedeemResult, { ok: false }>): string {
   if (result.reason === "rate_limited") return "Too many attempts. Please wait a minute and try again."
+  if (result.reason === "quota_exceeded") return "Unlocking is paused for now. Ask the resident for help."
   if (result.reason === "lock_failed") return "The locker couldn't be unlocked. Please try again."
   return "This link is no longer available. Ask for a new link."
 }

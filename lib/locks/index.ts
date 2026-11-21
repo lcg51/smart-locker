@@ -1,16 +1,22 @@
-import { decryptSecret } from "@/lib/crypto"
+import { decryptSecret, encryptSecret } from "@/lib/crypto"
 import { prisma } from "@/lib/db"
 import { getEnv } from "@/lib/env"
 import { MockLockProvider } from "@/lib/locks/mock"
-import { TTLockClient, TTLockProvider } from "@/lib/locks/ttlock"
+import { refreshTTLockToken, TTLockClient, TTLockProvider } from "@/lib/locks/ttlock"
+import type { TTLockToken } from "@/lib/locks/ttlock"
 import type { LockProvider } from "@/lib/locks/types"
 
 export type LockProviderConfig = {
   LOCK_PROVIDER: "mock" | "ttlock"
   TTLOCK_API_URL?: string
   TTLOCK_CLIENT_ID?: string
+  TTLOCK_CLIENT_SECRET?: string
   CREDENTIAL_ENCRYPTION_KEY?: string
+  fetch?: typeof fetch
 }
+
+const REFRESH_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
+let warnedRefreshFailure = false
 
 export async function createLockProvider(config: LockProviderConfig): Promise<LockProvider> {
   if (config.LOCK_PROVIDER === "mock") return new MockLockProvider()
@@ -27,14 +33,62 @@ async function createTTLockProvider(config: LockProviderConfig): Promise<LockPro
   const credential = await prisma.vendorCredential.findUnique({ where: { vendor: "ttlock" } })
   if (!credential) throw new Error("No TTLock credential is stored; run pnpm seed-ttlock")
 
-  const { accessToken } = JSON.parse(decryptSecret(credential.encryptedTokens, key)) as { accessToken: string }
+  const token = JSON.parse(decryptSecret(credential.encryptedTokens, key)) as TTLockToken
+  const accessToken = await currentAccessToken({ token, key, config })
+
   return new TTLockProvider(
     new TTLockClient({
       baseUrl: config.TTLOCK_API_URL,
       clientId: config.TTLOCK_CLIENT_ID,
       accessToken,
+      fetch: config.fetch,
     }),
   )
+}
+
+async function currentAccessToken(input: {
+  token: TTLockToken
+  key: string
+  config: LockProviderConfig
+}): Promise<string> {
+  const expiresAt = Date.parse(input.token.expiresAt ?? "")
+  if (!Number.isFinite(expiresAt) || expiresAt - Date.now() > REFRESH_WINDOW_MS) {
+    return input.token.accessToken
+  }
+
+  const { TTLOCK_API_URL, TTLOCK_CLIENT_ID, TTLOCK_CLIENT_SECRET } = input.config
+  if (!input.token.refreshToken || !TTLOCK_API_URL || !TTLOCK_CLIENT_ID || !TTLOCK_CLIENT_SECRET) {
+    return input.token.accessToken
+  }
+
+  try {
+    const refreshed = await refreshTTLockToken(
+      {
+        baseUrl: TTLOCK_API_URL,
+        clientId: TTLOCK_CLIENT_ID,
+        clientSecret: TTLOCK_CLIENT_SECRET,
+        refreshToken: input.token.refreshToken,
+        uid: input.token.uid,
+      },
+      input.config.fetch,
+    )
+    const merged: TTLockToken = {
+      ...input.token,
+      ...refreshed,
+      uid: refreshed.uid || input.token.uid,
+    }
+    await prisma.vendorCredential.update({
+      where: { vendor: "ttlock" },
+      data: { encryptedTokens: encryptSecret(JSON.stringify(merged), input.key) },
+    })
+    return merged.accessToken
+  } catch {
+    if (!warnedRefreshFailure) {
+      warnedRefreshFailure = true
+      console.warn("TTLock token refresh failed; using the stored token until it is re-seeded")
+    }
+    return input.token.accessToken
+  }
 }
 
 const globalForLocks = globalThis as unknown as {

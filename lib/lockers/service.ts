@@ -1,7 +1,9 @@
 import { ActorType, LockAction, LockStatus } from "@prisma/client"
 import { prisma } from "@/lib/db"
 import { getLockerForUser } from "@/lib/lockers/queries"
+import { getEnv } from "@/lib/env"
 import { getLockProvider } from "@/lib/locks"
+import { QuotaExceededError } from "@/lib/locks/quota"
 import type { LockProvider, LockerState } from "@/lib/locks/types"
 import { isLockCommandsEnabled } from "@/lib/ops/controls"
 import { getRateLimiter } from "@/lib/rate-limit"
@@ -52,6 +54,12 @@ function statusToDbStatus(status: LockerState["status"]): LockStatus {
   if (status === "locked") return LockStatus.LOCKED
   if (status === "unlocked") return LockStatus.UNLOCKED
   return LockStatus.UNKNOWN
+}
+
+function dbStatusToState(status: LockStatus): LockerState["status"] {
+  if (status === LockStatus.LOCKED) return "locked"
+  if (status === LockStatus.UNLOCKED) return "unlocked"
+  return "unknown"
 }
 
 async function recordFailure(lockerId: string, command: Command, errorCode: string): Promise<void> {
@@ -120,9 +128,10 @@ async function runLockCommand(input: LockerActionInput, command: Command): Promi
   } catch {
     try {
       state = await provider.getState(locker.vendorLockId)
-    } catch {
-      await recordFailure(locker.id, command, "provider_error")
-      return { ok: false, errorCode: "provider_error" }
+    } catch (error) {
+      const errorCode = error instanceof QuotaExceededError ? "quota_exceeded" : "provider_error"
+      await recordFailure(locker.id, command, errorCode)
+      return { ok: false, errorCode }
     }
 
     if (state.status !== targetStatus) {
@@ -134,9 +143,15 @@ async function runLockCommand(input: LockerActionInput, command: Command): Promi
   if (!state) {
     try {
       state = await provider.getState(locker.vendorLockId)
-    } catch {
-      await recordFailure(locker.id, command, "provider_error")
-      return { ok: false, errorCode: "provider_error" }
+    } catch (error) {
+      if (error instanceof QuotaExceededError) {
+        // The command itself succeeded; only the confirmation read is blocked.
+        // Report the state the vendor accepted rather than a false failure.
+        state = { status: targetStatus, batteryLevel: null, online: null }
+      } else {
+        await recordFailure(locker.id, command, "provider_error")
+        return { ok: false, errorCode: "provider_error" }
+      }
     }
   }
 
@@ -157,10 +172,28 @@ export async function refreshLockerState(input: LockerActionInput): Promise<Lock
   const locker = await getLockerForUser(input.userId, input.lockerId)
   if (!locker) return { ok: false, errorCode: "not_found" }
 
+  const cacheMs = getEnv().LOCK_STATE_CACHE_SECONDS * 1000
+  if (
+    cacheMs > 0 &&
+    locker.lastSyncedAt !== null &&
+    locker.status !== LockStatus.UNKNOWN &&
+    Date.now() - locker.lastSyncedAt.getTime() < cacheMs
+  ) {
+    return {
+      ok: true,
+      state: {
+        status: dbStatusToState(locker.status),
+        batteryLevel: locker.batteryLevel,
+        online: null,
+      },
+    }
+  }
+
   let state: LockerState
   try {
     state = await provider.getState(locker.vendorLockId)
-  } catch {
+  } catch (error) {
+    if (error instanceof QuotaExceededError) return { ok: false, errorCode: "quota_exceeded" }
     return { ok: false, errorCode: "provider_error" }
   }
 
