@@ -61,7 +61,7 @@ Work the tasks in order. Each file is self-contained: it lists its own files, in
 | 14 | [Light, dark, and system appearance](2026-11-01-smart-locker-mvp/task-14-dark-mode.md) | Phase 1.5 | Task 13 |
 | 15 | [TTLock provider and credential encryption (Phase 2)](2026-11-01-smart-locker-mvp/task-15-ttlock-provider.md) | Phase 2 | Task 01, Task 02, Task 03 |
 
-### Pilot hardening and growth backlog (Tasks 16–31)
+### Pilot hardening and growth backlog (Tasks 16–34)
 
 The [pilot hardening and growth design](../specs/2026-11-03-smart-locker-pilot-hardening-design.md)
 is the spec of record for these tasks. Tasks 16–21 are the pilot-critical set;
@@ -86,6 +86,9 @@ provider task and does not move earlier.
 | 29 | [Share lifecycle audit and link extension](2026-11-01-smart-locker-mvp/task-29-share-lifecycle.md) | Phase 2 | Task 06, Task 08 |
 | 30 | [Accessibility and security E2E coverage](2026-11-01-smart-locker-mvp/task-30-accessibility-security-e2e.md) | Phase 2 | Task 12, Task 14, Task 16, Task 17, Task 22 |
 | 31 | [Form success toast notifications](2026-11-01-smart-locker-mvp/task-31-form-success-toasts.md) | Phase 2 | Task 05, Task 06, Task 08, Task 09, Task 10, Task 22, Task 28, Task 29 |
+| 32 | [TTLock API quota reduction and guard](2026-11-01-smart-locker-mvp/task-32-ttlock-api-quota.md) | Phase 2.5 | Task 15, Task 16 |
+| 33 | [Evaluate local Bluetooth control](2026-11-01-smart-locker-mvp/task-33-local-bluetooth-evaluation.md) | Phase 3 (evaluation) | Task 32 |
+| 34 | [Evaluate TTLock on-premise](2026-11-01-smart-locker-mvp/task-34-on-premise-evaluation.md) | Phase 3 (evaluation) | Task 32 |
 
 **Backlog Review Focus**
 
@@ -106,6 +109,10 @@ provider task and does not move earlier.
 6. **A success toast hides a validation error or is lost on navigation.** Errors
    must stay inline, instructional text must stay visible, and redirect-only
    actions must not pretend a toast will survive. Pinned in Task 31.
+7. **The quota guard blocks a safety action.** When state reads are paused, an
+   owner unlock, a guest unlock, or a relock must still work below the hard
+   limit, and a blocked call must never silently claim success. Pinned in
+   Task 32.
 
 ## Dependency order
 
@@ -128,9 +135,11 @@ Task 04, 09 -> Task 28
 Task 06, 08 -> Task 29
 Task 12, 14, 16, 17, 22 -> Task 30
 Task 05, 06, 08, 09, 10, 22, 28, 29 -> Task 31
+Task 15, 16 -> Task 32
+Task 32 -> Tasks 33, 34 (evaluations; no code until a go decision)
 ```
 
-Tasks 02, 03, and 10 can run in parallel once Task 01 lands. Tasks 06 and 10 can run in parallel once Task 05 lands. Everything else is sequential because it consumes the previous task's interfaces. Tasks 22–24, 26, and 28–31 can run during the pilot; Task 25 waits for Task 15's real gateway timestamps; Task 27 waits for the English UI to be stable.
+Tasks 02, 03, and 10 can run in parallel once Task 01 lands. Tasks 06 and 10 can run in parallel once Task 05 lands. Everything else is sequential because it consumes the previous task's interfaces. Tasks 22–24, 26, and 28–32 can run during the pilot; Task 25 waits for Task 15's real gateway timestamps; Task 27 waits for the English UI to be stable. Tasks 33 and 34 are decision gates and can run in parallel after Task 32.
 
 ## Execution notes
 
@@ -141,4 +150,6 @@ Tasks 02, 03, and 10 can run in parallel once Task 01 lands. Tasks 06 and 10 can
 - Phase 1 ships on `MockLockProvider`; do not start Task 15 until a TTLock developer account and a test lock exist.
 - Task 25 can land with null-safe mock data, but recheck it after Task 15 sets real `gatewayLastSeenAt` values.
 - Run Task 31 after Task 29 so the share-extension dialog exists; keep validation and failure messages inline.
+- Confirm the TTLock monthly quota on the developer console before Task 32; the guard's thresholds depend on it.
+- Tasks 33 and 34 produce decision documents only. Do not start their code until the owner records a go.
 - Run each task's final verification command and read its output before claiming the task complete.
