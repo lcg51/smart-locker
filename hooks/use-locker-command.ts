@@ -13,6 +13,10 @@ export type DisplayState = Omit<LockerState, "online"> & {
 
 export type Command = "lock" | "unlock"
 
+// Mirrors LOCK_STATE_CACHE_SECONDS (server default 30). Returning to the tab
+// only refreshes when the stored state is older than this.
+const STATE_CACHE_MS = 30_000
+
 export const statusLabels: Record<DisplayState["status"], string> = {
   locked: "Locked",
   unlocked: "Unlocked",
@@ -29,6 +33,9 @@ export function lockerCommandErrorMessage(errorCode: string | undefined, command
   if (errorCode === "not_found") return "This locker is no longer available."
   if (errorCode === "rate_limited") return "Too many attempts. Wait a minute and try again."
   if (errorCode === "commands_disabled") return "Unlock is paused. You can still lock the locker."
+  if (errorCode === "quota_exceeded") {
+    return "Locker commands are paused until the monthly connection limit resets. Try again next month."
+  }
   return `Couldn't ${command} this locker. Check its connection and try again.`
 }
 
@@ -69,18 +76,26 @@ export function useLockerCommand(locker: LockerRecord) {
 
   useEffect(() => {
     const controller = new AbortController()
-    // Initial polling starts after mount; the async update is not a render-time setState.
+    // One read on mount; no background polling. The server cache absorbs
+    // repeated opens within its TTL.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshState(controller.signal)
-    const interval = window.setInterval(() => {
-      if (document.visibilityState === "visible") void refreshState(controller.signal)
-    }, 30_000)
 
     return () => {
-      window.clearInterval(interval)
       controller.abort()
     }
   }, [refreshState])
+
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.visibilityState !== "visible") return
+      const lastSynced = locker.lastSyncedAt ? new Date(locker.lastSyncedAt).getTime() : 0
+      if (Date.now() - lastSynced >= STATE_CACHE_MS) void refreshState()
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
+  }, [locker.lastSyncedAt, refreshState])
 
   function runCommand(command: Command) {
     setRetryCommand(command)

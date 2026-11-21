@@ -38,7 +38,7 @@ export type ResolvedGrant = { ok: true; grant: ResolvedGrantData }
 
 export type RedeemResult =
   | { ok: true; relockAt: Date }
-  | { ok: false; reason: GrantFailure["reason"] | "rate_limited" | "lock_failed" }
+  | { ok: false; reason: GrantFailure["reason"] | "rate_limited" | "lock_failed" | "quota_exceeded" }
 
 export type RedeemInput = {
   token: string
@@ -211,7 +211,7 @@ export async function redeemShareToken({
       errorCode,
       relockAt,
     })
-    return { ok: false, reason: "lock_failed" }
+    return { ok: false, reason: errorCode === "quota_exceeded" ? "quota_exceeded" : "lock_failed" }
   }
 
   await prisma.$transaction([
