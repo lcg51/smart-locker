@@ -2,7 +2,7 @@
 
 Date: 2026-11-03
 Status: Approved for planning (user, 2026-11-03)
-Spec of record for Tasks 16–31.
+Spec of record for Tasks 16–34.
 
 ## Intent
 
@@ -321,6 +321,41 @@ bug, not a feature request, and it is Task 16.
   `Other sessions revoked.`, `No other sessions to revoke.`, and
   `Share link extended.`.
 
+### 17. TTLock API quota (Task 32)
+
+- The TTLock Open Platform meters API calls per month. The month boundary follows
+  Beijing time (UTC+8), which the local counter must match. Exceeding the quota
+  returns 30006 or 30007.
+- Remove background polling. The locker detail view refreshes on mount, on an
+  explicit **Refresh status**, and when the tab becomes visible after the cache
+  TTL has passed.
+- Reuse a stored lock state for `LOCK_STATE_CACHE_SECONDS` (default 30) instead
+  of calling the provider again.
+- Count calls per vendor and period. When `TTLOCK_MONTHLY_QUOTA` is set, stop
+  state and health reads at the soft percentage, keep owner, guest, and relock
+  commands working, and stop commands at the hard limit with a plain-language
+  pause message. An unset or zero quota disables the guard and logs once.
+- Refresh the access token with `grant_type=refresh_token` when it expires within
+  seven days, and store the new token encrypted.
+- `pnpm ttlock-usage` reports the vendor's monthly count, the local count, and the
+  configured limit. Confirm the real limit on the developer console before
+  setting it; never invent the number.
+- A blocked call never reports success, and the guest page must not claim an
+  unlock that the guard refused.
+
+### 18. Deferred TTLock evaluations (Tasks 33–34)
+
+Both tasks produce a decision document under `docs/decisions/` and no production
+code. The owner records the decision and the conditions that would reopen it.
+
+- **Task 33, local Bluetooth:** compare the free TTLock SDK (native or Flutter)
+  with the cloud path. The decisive question is whether guests keep remote
+  unlock. If they must, the likely recommendation is owner-only Bluetooth or
+  no-go.
+- **Task 34, on-premise:** compare the paid self-hosted deployment with the cloud
+  subscription. The decisive constraints are EU data residency, gateway support,
+  and the cost at pilot scale and at ten times pilot scale.
+
 ## Task map
 
 | # | Task | Phase | Depends on | Acceptance in one line |
@@ -341,13 +376,20 @@ bug, not a feature request, and it is Task 16.
 | 29 | Share lifecycle audit and link extension | 2 | 06, 08 | Share create/revoke/extend events are visible and live links can be extended safely. |
 | 30 | Accessibility and security E2E coverage | 2 | 12, 14, 16, 17, 22 | Axe and the critical security paths run in the E2E suite. |
 | 31 | Form success toast notifications | 2 | 05, 06, 08, 09, 10, 22, 28, 29 | Successful settings/form actions confirm with a toast; errors stay inline. |
+| 32 | TTLock API quota reduction and guard | 2.5 | 15, 16 | No background polling, brief state reuse, and a quota guard that keeps safety commands working. |
+| 33 | Evaluate local Bluetooth control | 3 | 32 | A decision document answers licence, platform, feature loss, security, and effort. |
+| 34 | Evaluate TTLock on-premise | 3 | 32 | A decision document answers cost, EU residency, API differences, and hardware support. |
 
 ## Sequencing
 
 - Tasks 16–21 are the pilot-critical set. Do them before inviting residents.
   Task 18 can start immediately because it only depends on the merged tooling.
-- Tasks 22–24, 26, and 28–31 can run during the pilot, in the order that matches
+- Tasks 22–24, 26, and 28–32 can run during the pilot, in the order that matches
   operator feedback. Task 25 lands after Task 15 has real gateway timestamps.
+- Task 32 follows Task 15 and Task 16. Confirm the monthly quota on the developer
+  console first; the guard cannot be set without it.
+- Tasks 33 and 34 follow Task 32 and can run in parallel. They are decision
+  gates: no production code until the owner records a go.
 - Task 31 runs after Task 29 so the share-extension dialog exists. It is UX
   polish and should not delay the pilot-critical set.
 - Task 27 is Phase 3. Do not start it until the English pilot-critical and UX
