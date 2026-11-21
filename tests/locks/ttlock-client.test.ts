@@ -1,8 +1,13 @@
 import { createHash } from "node:crypto"
 import { describe, expect, it, vi } from "vitest"
+import { QuotaExceededError } from "@/lib/locks/quota"
 import { requestTTLockToken, TTLockClient } from "@/lib/locks/ttlock"
 
 const BASE = "https://euapi.ttlock.com"
+
+function allowAll() {
+  return { check: async () => "ok" as const, record: async () => {} }
+}
 
 describe("TTLockClient", () => {
   it("posts form-encoded parameters with the client id, token, and millisecond date", async () => {
@@ -13,6 +18,7 @@ describe("TTLockClient", () => {
       accessToken: "token-1",
       fetch: fetchMock as unknown as typeof fetch,
       now: () => 1_700_000_000_000,
+      quota: allowAll(),
     })
 
     await client.post("/v3/lock/unlock", { lockId: 42 })
@@ -36,6 +42,7 @@ describe("TTLockClient", () => {
       accessToken: "token-1",
       fetch: fetchMock as unknown as typeof fetch,
       now: () => 1,
+      quota: allowAll(),
     })
 
     await expect(client.get("/v3/lock/queryOpenState", { lockId: 42 })).resolves.toEqual({ errcode: 0, state: 1 })
@@ -53,8 +60,37 @@ describe("TTLockClient", () => {
       clientId: "c",
       accessToken: "t",
       fetch: (async () => new Response("", { status: 503 })) as unknown as typeof fetch,
+      quota: allowAll(),
     })
     await expect(client.post("/v3/lock/lock", { lockId: 1 })).rejects.toThrow("HTTP 503")
+  })
+
+  it("refuses a call when the guard is hard-limited without reaching the vendor", async () => {
+    const fetchMock = vi.fn()
+    const client = new TTLockClient({
+      baseUrl: BASE,
+      clientId: "c",
+      accessToken: "t",
+      fetch: fetchMock as unknown as typeof fetch,
+      quota: { check: async () => "hard_limited" as const, record: async () => {} },
+    })
+
+    await expect(client.post("/v3/lock/unlock", { lockId: 1 }, "command")).rejects.toBeInstanceOf(QuotaExceededError)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it("records a vendor call after a response, including vendor errors", async () => {
+    const record = vi.fn(async () => {})
+    const client = new TTLockClient({
+      baseUrl: BASE,
+      clientId: "c",
+      accessToken: "t",
+      fetch: (async () => new Response(JSON.stringify({ errcode: 30003 }), { status: 200 })) as unknown as typeof fetch,
+      quota: { check: async () => "ok" as const, record },
+    })
+
+    await client.post("/v3/lock/unlock", { lockId: 1 }, "command")
+    expect(record).toHaveBeenCalledTimes(1)
   })
 })
 

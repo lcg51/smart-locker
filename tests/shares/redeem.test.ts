@@ -172,6 +172,23 @@ describe("redeemShareToken", () => {
     expect(await prisma.lockEvent.count({ where: { actorType: "GUEST", success: true } })).toBe(1)
   })
 
+  it("reports a quota pause separately from a lock failure", async () => {
+    const { userId, locker } = await seed()
+    const { token } = await createShareGrant({ userId, lockerId: locker.id })
+    const provider = {
+      unlock: async () => ({ success: false as const, errorCode: "quota_exceeded" }),
+    }
+
+    await expect(
+      redeemShareToken({
+        token,
+        ip: "1.1.1.1",
+        provider: provider as unknown as MockLockProvider,
+        limiter: allowAllLimiter(),
+      }),
+    ).resolves.toEqual({ ok: false, reason: "quota_exceeded" })
+  })
+
   it("does not consume a use when the lock fails and records the failure", async () => {
     const { userId, locker } = await seed()
     const { token, grant } = await createShareGrant({ userId, lockerId: locker.id, maxUses: 1 })

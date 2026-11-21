@@ -225,6 +225,35 @@ describe("refreshLockerState", () => {
     expect(await prisma.lockEvent.count()).toBe(0)
   })
 
+  it("reuses a recent stored state instead of calling the provider", async () => {
+    const { userId, locker } = await seed()
+    await prisma.locker.update({
+      where: { id: locker.id },
+      data: { status: "LOCKED", batteryLevel: 88, lastSyncedAt: new Date(Date.now() - 5_000) },
+    })
+    const provider = { getState: vi.fn() } as unknown as LockProvider
+
+    await expect(refreshLockerState({ userId, lockerId: locker.id, provider })).resolves.toEqual({
+      ok: true,
+      state: { status: "locked", batteryLevel: 88, online: null },
+    })
+    expect(provider.getState).not.toHaveBeenCalled()
+  })
+
+  it("queries the provider when the stored state is older than the cache TTL", async () => {
+    const { userId, locker } = await seed()
+    await prisma.locker.update({
+      where: { id: locker.id },
+      data: { status: "LOCKED", lastSyncedAt: new Date(Date.now() - 60_000) },
+    })
+    const provider = {
+      getState: vi.fn(async () => ({ status: "locked", batteryLevel: 100, online: true })),
+    } as unknown as LockProvider
+
+    await refreshLockerState({ userId, lockerId: locker.id, provider })
+    expect(provider.getState).toHaveBeenCalledTimes(1)
+  })
+
   it("does not refresh another resident's locker", async () => {
     const { locker } = await seed()
     const stranger = await prisma.user.create({ data: { email: "stranger@example.com" } })
