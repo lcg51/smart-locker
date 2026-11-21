@@ -22,7 +22,7 @@ Commands that touch the pilot database require `DATABASE_URL` to point at that d
 pnpm tsx scripts/seed-vendor-credential.ts
 ```
 
-with `TTLOCK_ACCESS_TOKEN` and `CREDENTIAL_ENCRYPTION_KEY` set. The script does not exist in Phase 1; until it does, keep `LOCK_PROVIDER=mock`.
+with the `TTLOCK_*` variables and `CREDENTIAL_ENCRYPTION_KEY` set, then run `pnpm seed-ttlock`. The token expires after 90 days; re-run the script before then (refresh is not automated yet). Keep `LOCK_PROVIDER=mock` until a test lock has passed a manual unlock and lock.
 
 ## 3. Deploy and migrate
 

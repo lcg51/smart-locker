@@ -82,6 +82,8 @@ pnpm exec playwright install chromium
 pnpm test:e2e
 ```
 
+With `LOCK_PROVIDER=ttlock`, run `pnpm ttlock-usage` to compare TTLock's monthly call count with the local counter and the configured limit. The count resets on Beijing time.
+
 The E2E suite requires port 3100 to be free. It seeds `ana@example.com` with a `Kitchen` locker, confirms onboarding, unlocks, creates a share link, redeems it as a guest, and verifies revocation fails closed. Guest-unlock email is disabled for the seeded resident so tests do not call Resend.
 
 `e2e/security.spec.ts` covers expired, revoked, and one-use links, cross-resident 404s, guest-page disclosure, and headers. `e2e/accessibility.spec.ts` runs axe (`@axe-core/playwright`) on the sign-in, dashboard, settings, activity, and guest pages, and checks theme radios and share-dialog focus. The `beto@example.com` resident exists only in the test seed.
@@ -109,9 +111,13 @@ CI pins Node 22 (`.nvmrc`) and pnpm 12.16.1 (`packageManager`). Both jobs run Po
 | `RESEND_API_KEY` | Resend API key. |
 | `PRIVACY_CONTACT_EMAIL` | Monitored contact address shown in the privacy notice; required. |
 | `LOCK_PROVIDER` | `mock` (default) or `ttlock`. |
-| `TTLOCK_API_BASE` | TTLock API base URL, Phase 2. |
-| `TTLOCK_ACCESS_TOKEN` | TTLock access token, Phase 2. |
-| `CREDENTIAL_ENCRYPTION_KEY` | 64 hex characters for vendor credential encryption, Phase 2. |
+| `TTLOCK_API_URL` | TTLock Open Platform API base. EU developer accounts use `https://euapi.ttlock.com`. |
+| `TTLOCK_CLIENT_ID` / `TTLOCK_CLIENT_SECRET` | Developer application credentials from the TTLock Open Platform. |
+| `TTLOCK_MAIL` / `TTLOCK_PASSWORD` | TTLock **app** account that owns the locks (not the developer account). `pnpm seed-ttlock` uses them once to obtain and store an encrypted token. |
+| `CREDENTIAL_ENCRYPTION_KEY` | 64 hex characters that encrypt the stored TTLock token. Keep it with the deployment secrets. |
+| `TTLOCK_MONTHLY_QUOTA` | Monthly call limit for the developer application. `0` or unset disables the guard. The basic tier is 30,000; set the number from the developer console. |
+| `TTLOCK_QUOTA_SOFT_LIMIT_PERCENT` | Share of the limit at which state and health reads stop, default `80`. Unlock, lock, and relock continue until the hard limit. |
+| `LOCK_STATE_CACHE_SECONDS` | How long a lock state is reused before another vendor read, default `30`. |
 | `UPSTASH_REDIS_REST_URL` | Optional; enables distributed rate limiting for sign-in, shares, and lock commands. |
 | `UPSTASH_REDIS_REST_TOKEN` | Optional; required with the Upstash URL. |
 | `RELOCK_SECONDS` | Guest relock delay in seconds; defaults to `30`. |

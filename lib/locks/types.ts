@@ -5,7 +5,8 @@ export type LockResult = { success: true } | { success: false; errorCode: string
 export type LockerState = {
   status: LockStatusValue
   batteryLevel: number | null
-  online: boolean
+  /** null when the value comes from a cached read and is not freshly checked. */
+  online: boolean | null
 }
 
 export interface LockProvider {
