@@ -90,6 +90,8 @@ provider task and does not move earlier.
 | 33 | [Evaluate local Bluetooth control](2026-11-01-smart-locker-mvp/task-33-local-bluetooth-evaluation.md) | Phase 3 (evaluation) | Task 32 |
 | 34 | [Evaluate TTLock on-premise](2026-11-01-smart-locker-mvp/task-34-on-premise-evaluation.md) | Phase 3 (evaluation) | Task 32 |
 
+**Task 33 status:** evaluated 2026-11-21. Proposed no-go for the pilot; the free tier is 30,000 calls per month per application, and local Bluetooth drops the guest link, server relock, and history. Decision pending owner sign-off: [ttlock-local-bluetooth.md](../../decisions/ttlock-local-bluetooth.md).
+
 **Backlog Review Focus**
 
 1. **A guest closes the tab before the 30-second timer.** The locker must still
