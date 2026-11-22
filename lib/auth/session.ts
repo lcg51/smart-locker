@@ -16,7 +16,7 @@ export async function requireUser(): Promise<{ id: string; email: string }> {
   const session = await auth()
 
   if (!session?.user) redirect("/auth")
-  if (!session.user.email) redirect("/auth/error")
+  if (!session.user.email) redirect("/auth?error=unavailable")
 
   return { id: session.user.id, email: session.user.email }
 }
