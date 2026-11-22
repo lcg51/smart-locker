@@ -168,8 +168,13 @@ database; the inline value applies to that one command.
 ### 2. Configure Vercel
 
 Set the project's **Production Branch** to `dev` under **Settings →
-Environments → Production → Branch Tracking**. Then add these variables for
-Production (and Preview if you use preview deployments):
+Environments → Production → Branch Tracking**. `vercel.json` also sets
+`git.deploymentEnabled` to `{"**": false, "dev": true}`, so only `dev` deploys;
+pull requests and other branches do not create preview deployments. GitHub
+Actions still runs the CI gate on every PR. Remove that rule if you want Vercel
+previews again.
+
+Then add these variables for Production:
 
 | Variable | Value |
 |---|---|
