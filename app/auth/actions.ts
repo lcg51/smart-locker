@@ -4,17 +4,11 @@ import { headers } from "next/headers"
 import { redirect, unstable_rethrow } from "next/navigation"
 import { z } from "zod"
 import { signIn } from "@/auth"
+import type { RequestMagicLinkState } from "@/lib/auth/magic-link-state"
 import { checkMagicLinkRateLimit } from "@/lib/auth/rate-limit"
 import { SIGN_IN_EMAIL_ERROR, SIGN_IN_SEND_ERROR } from "@/lib/auth/sign-in-notice"
 
 const emailSchema = z.string().trim().email()
-
-export type RequestMagicLinkState = {
-  error: string | null
-  at: number
-}
-
-export const initialRequestMagicLinkState: RequestMagicLinkState = { error: null, at: 0 }
 
 export async function requestMagicLink(
   _previous: RequestMagicLinkState,
