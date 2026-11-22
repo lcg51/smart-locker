@@ -1,10 +1,8 @@
 "use client"
 
 import { useActionState, useEffect, useRef } from "react"
-import {
-  initialRequestMagicLinkState,
-  requestMagicLink,
-} from "@/app/auth/actions"
+import { requestMagicLink } from "@/app/auth/actions"
+import { initialRequestMagicLinkState } from "@/lib/auth/magic-link-state"
 import { toast } from "@/hooks/use-toast"
 
 export function AuthForm({ notice }: { notice: string | null }) {
