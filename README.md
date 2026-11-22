@@ -139,6 +139,107 @@ Retention is enforced by `/api/cron/cleanup` (daily at 03:00 UTC, also protected
 
 `pnpm metrics --from YYYY-MM-DD --to YYYY-MM-DD` prints a read-only Markdown and JSON report of pilot activity. The default window is the last 28 days. See `docs/pilot-metrics.md` for definitions, zero-denominator guidance, and the MVP success signals.
 
+## Staging deployment on Vercel Hobby
+
+This is the staging setup for the mock provider on the free Vercel plan. It is
+for checking the deployment, email, database, and guest flow. Do not invite
+residents on it.
+
+**Prerequisites:** an EU Postgres database (Neon or Supabase), a Resend account,
+a Vercel project connected to the GitHub repo, and the `dev` branch on GitHub.
+
+### 1. Create the staging database
+
+Create a Neon or Supabase project in an EU region. Keep two connection strings:
+
+- **Pooled**, for Vercel at runtime.
+- **Direct**, for migrations from your machine.
+
+Apply the schema with the direct URL, from the repo root:
+
+```bash
+DATABASE_URL='postgresql://...direct...' pnpm db:deploy
+```
+
+Only `db:deploy` runs on a hosted database. Never use `prisma migrate reset` or
+`prisma migrate dev` there. Keep your local `.env.local` pointed at your local
+database; the inline value applies to that one command.
+
+### 2. Configure Vercel
+
+Set the project's **Production Branch** to `dev` under **Settings →
+Environments → Production → Branch Tracking**. Then add these variables for
+Production (and Preview if you use preview deployments):
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | Pooled connection string; append `&connection_limit=1` so serverless instances do not exhaust connections. |
+| `AUTH_SECRET` | Random value, at least 32 characters. |
+| `AUTH_URL` | Deployment URL, including `https://`. |
+| `APP_URL` | Same deployment URL. |
+| `EMAIL_FROM` | A bare address on a domain verified in Resend. |
+| `RESEND_API_KEY` | Resend key with sending access. |
+| `PRIVACY_CONTACT_EMAIL` | A monitored address. |
+| `CRON_SECRET` | Random value, at least 16 characters. |
+| `LOCK_PROVIDER` | `mock`. |
+
+Leave `E2E` unset; it enables the test-session route. `UPSTASH_*` is optional
+while staging runs a single instance. Redeploy after changing variables; Vercel
+does not apply them to an existing deployment.
+
+### 3. Resend
+
+Verify the sending domain and set `EMAIL_FROM` to an address on it. With
+`onboarding@resend.dev`, Resend delivers only to the address that owns the Resend
+account, so a magic link to any other tester will not arrive.
+
+### 4. Provision the first resident
+
+Sign-in is invite-only. The allowlist check reads the `AllowedEmail` table, so a
+fresh database rejects every address with `AccessDenied` until a resident is
+provisioned. The provision script creates the allowlist entry, the user, and the
+lockers in one transaction:
+
+```bash
+DATABASE_URL='postgresql://...direct...' pnpm provision \
+  --email you@example.com \
+  --gateway gw-staging \
+  --locker "Kitchen:mock:staging-lock-1"
+```
+
+The `--locker` value is `name:vendor:vendorLockId`. With `LOCK_PROVIDER=mock`,
+the lock ID is any unique string. Use a different `vendorLockId` per resident:
+provisioning matches on `(vendor, vendorLockId)` and does not move an existing
+locker to a new user.
+
+### 5. Cron limits
+
+Vercel Hobby allows cron jobs only once per day, so `vercel.json` schedules just
+`/api/cron/cleanup`. A guest who keeps the tab open still relocks, because the
+page calls the relock action at the deadline. Closed tabs need
+`/api/cron/relock` called every minute from an external scheduler with
+`Authorization: Bearer <CRON_SECRET>`. Add the one-minute cron back to
+`vercel.json` on Pro.
+
+### 6. First-run check
+
+1. Open `/auth`, request a magic link, and sign in.
+2. Confirm the dashboard shows the provisioned locker and `/onboarding` asks you
+   to confirm it.
+3. Create a guest link and open it in a private window.
+4. Confirm `/privacy` renders with the configured contact.
+5. Confirm a second, unprovisioned address is refused at sign-in.
+
+### Troubleshooting
+
+| Symptom | Cause |
+|---|---|
+| `ZodError` for an env key | A required variable is missing, or `APP_URL`/`AUTH_URL` lacks `https://`. Check the `issues` array for the key and redeploy. |
+| `AccessDenied` at sign-in | The address has no `AllowedEmail` row in the database the app uses. Provision it. |
+| Dashboard says "No lockers yet" | The locker is missing or belongs to another user. Check `select id, email from "User"` and the locker's `userId`; reassign it or delete it and re-provision with a unique `vendorLockId`. |
+| Magic link never arrives | `EMAIL_FROM` is not on a verified domain, or you use `onboarding@resend.dev` with a recipient other than the Resend account owner. |
+| Tables missing in the Neon console | You are viewing a different branch or database. Run the information_schema query on the branch in `DATABASE_URL`. |
+
 ## Mock and TTLock providers
 
 `LOCK_PROVIDER=mock` is the Phase 1 default. It supports provisioning, lock, unlock, and state reads without hardware, and auto-registers unknown lock IDs so seeded fixtures work.
