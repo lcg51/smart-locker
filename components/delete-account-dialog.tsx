@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { AlertTriangle } from "lucide-react"
 import { deleteAccountAction } from "@/app/actions/account"
+import { useI18n } from "@/components/i18n-provider"
 import { Button } from "@/components/ui/button"
 import { clearPinState } from "@/lib/pin"
 import {
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog"
 
 export function DeleteAccountDialog() {
+  const { dictionary } = useI18n()
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -29,7 +31,7 @@ export function DeleteAccountDialog() {
       try {
         await deleteAccountAction()
       } catch {
-        setError("We couldn't delete your account. Your data is unchanged; please try again.")
+        setError(dictionary.settings.deleteFailed)
       }
     })
   }
@@ -38,28 +40,26 @@ export function DeleteAccountDialog() {
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button className="min-h-11" type="button" variant="destructive">
-          Delete account
+          {dictionary.settings.deleteAccount}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <AlertTriangle aria-hidden="true" className="size-5 text-destructive-text" />
-            Delete your account permanently?
+            {dictionary.settings.deleteTitle}
           </AlertDialogTitle>
-          <AlertDialogDescription>
-            This permanently deletes your account, lockers, active share links, access history, and sign-in sessions. This action cannot be undone.
-          </AlertDialogDescription>
+          <AlertDialogDescription>{dictionary.settings.deleteDescription}</AlertDialogDescription>
         </AlertDialogHeader>
         {error && <p aria-live="polite" className="text-sm text-destructive-text" role="alert">{error}</p>}
         <AlertDialogFooter>
-          <AlertDialogCancel className="min-h-11" disabled={isPending}>Keep my account</AlertDialogCancel>
+          <AlertDialogCancel className="min-h-11" disabled={isPending}>{dictionary.settings.keepAccount}</AlertDialogCancel>
           <AlertDialogAction
             className="min-h-11 bg-destructive text-destructive-foreground hover:bg-destructive/90"
             disabled={isPending}
             onClick={handleDelete}
           >
-            {isPending ? "Deleting…" : "Delete account permanently"}
+            {isPending ? dictionary.settings.deleting : dictionary.settings.deletePermanently}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

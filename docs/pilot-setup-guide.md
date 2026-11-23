@@ -82,10 +82,13 @@ Ask the resident to:
 7. In iPhone Safari, use Share → Add to Home Screen, open the installed app, and confirm it starts at the dashboard. Turn the connection off and confirm the offline page explains that unlocking needs a connection.
 8. Sign in on a second browser, open Settings → Active sessions, confirm the device and approximate location labels look plausible, revoke the other sessions, and confirm the second browser is signed out. Change the display name and confirm it persists after reload.
 9. Create a share link, extend it by minutes and unlocks, and confirm the locker page shows the new limits and an `Extended` entry in Share link history. Confirm the link still cannot exceed 24 hours or 50 total unlocks.
+10. Open Settings → Language, switch to Español, and confirm the dashboard, settings, and activity pages switch to Spanish. Switch back to English and confirm the choice persists after reload.
+11. With Español selected, ask a guest to unlock the locker and confirm the guest-unlock email arrives in Spanish. If the resident prefers English, confirm the next notification returns to English after switching back.
 
 ## 6. Guest check
 
 - Open the share link in iPhone Safari, without installing anything.
+- Set the phone's browser language to Spanish and reload the guest link. Confirm the page is in Spanish and offers no language picker; guests follow the browser language, while residents choose their language in Settings.
 - Confirm the page shows only the locker name, guest label, and expiry.
 - With the phone in dark mode, confirm the page is dark and readable and offers no theme control.
 - Tap **Unlock locker** and confirm the 30-second relock countdown appears, then wait for **Locker relocked.** and confirm the owner's locker shows **Locked**.

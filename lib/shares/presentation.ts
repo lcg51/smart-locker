@@ -1,5 +1,7 @@
-export function formatShareExpiry(date: Date): string {
-  return new Intl.DateTimeFormat("en", {
+import type { Locale } from "@/lib/i18n/config"
+
+export function formatShareExpiry(date: Date, locale: Locale = "en"): string {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en", {
     year: "numeric",
     month: "short",
     day: "numeric",

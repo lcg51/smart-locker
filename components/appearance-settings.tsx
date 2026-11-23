@@ -2,14 +2,9 @@
 
 import { useSyncExternalStore } from "react"
 import { useTheme } from "next-themes"
+import { useI18n } from "@/components/i18n-provider"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-
-const THEME_OPTIONS = [
-  { value: "light", label: "Light", description: "Always use the light theme." },
-  { value: "dark", label: "Dark", description: "Always use the dark theme." },
-  { value: "system", label: "System", description: "Match this device's appearance." },
-] as const
 
 const subscribe = () => () => {}
 const getSnapshot = () => true
@@ -17,16 +12,34 @@ const getServerSnapshot = () => false
 
 export function AppearanceSettings() {
   const { theme, setTheme } = useTheme()
+  const { dictionary } = useI18n()
   const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  const options = [
+    {
+      value: "light",
+      label: dictionary.settings.themeLight,
+      description: dictionary.settings.themeLightDescription,
+    },
+    {
+      value: "dark",
+      label: dictionary.settings.themeDark,
+      description: dictionary.settings.themeDarkDescription,
+    },
+    {
+      value: "system",
+      label: dictionary.settings.themeSystem,
+      description: dictionary.settings.themeSystemDescription,
+    },
+  ] as const
 
   return (
     <RadioGroup
-      aria-label="Appearance"
+      aria-label={dictionary.settings.themeAria}
       className="gap-3"
       onValueChange={setTheme}
       value={mounted ? (theme ?? "system") : "system"}
     >
-      {THEME_OPTIONS.map((option) => (
+      {options.map((option) => (
         <Label
           className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border p-3 font-normal"
           key={option.value}

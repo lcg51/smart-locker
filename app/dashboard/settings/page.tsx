@@ -1,8 +1,9 @@
-import { Bell, Laptop, LockKeyhole, LogOut, ShieldCheck, SunMoon, UserRound } from "lucide-react"
+import { Bell, Laptop, Languages, LockKeyhole, LogOut, ShieldCheck, SunMoon, UserRound } from "lucide-react"
 import Link from "next/link"
 import { AppearanceSettings } from "@/components/appearance-settings"
 import { DeleteAccountDialog } from "@/components/delete-account-dialog"
 import { GuestUnlockEmailToggle } from "@/components/guest-unlock-email-toggle"
+import { LanguageSettings } from "@/components/language-settings"
 import { PinSettings } from "@/components/pin-settings"
 import { ProfileNameForm } from "@/components/profile-name-form"
 import { SessionList } from "@/components/session-list"
@@ -10,9 +11,11 @@ import { SignOutButton } from "@/components/sign-out-button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { getCurrentSessionToken, listActiveSessions, requireUser } from "@/lib/auth/session"
 import { prisma } from "@/lib/db"
+import type { Locale } from "@/lib/i18n/config"
+import { getDictionary, getLocale } from "@/lib/i18n/server"
 
-function formatSessionDate(date: Date): string {
-  return new Intl.DateTimeFormat("en-GB", {
+function formatSessionDate(date: Date, locale: Locale): string {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-GB", {
     dateStyle: "medium",
     timeStyle: "short",
     timeZone: "Europe/Madrid",
@@ -21,6 +24,8 @@ function formatSessionDate(date: Date): string {
 
 export default async function SettingsPage() {
   const user = await requireUser()
+  const locale = await getLocale()
+  const dictionary = getDictionary(locale)
   const preferences = await prisma.user.findUniqueOrThrow({
     where: { id: user.id },
     select: { guestUnlockEmails: true, name: true },
@@ -29,8 +34,8 @@ export default async function SettingsPage() {
   const sessions = await listActiveSessions(user.id, currentToken)
   const sessionRows = sessions.map((session) => ({
     id: session.id,
-    createdAt: formatSessionDate(session.createdAt),
-    expires: formatSessionDate(session.expires),
+    createdAt: formatSessionDate(session.createdAt, locale),
+    expires: formatSessionDate(session.expires, locale),
     isCurrent: session.isCurrent,
     deviceLabel: session.deviceLabel,
     locationLabel: session.locationLabel,
@@ -39,9 +44,9 @@ export default async function SettingsPage() {
   return (
     <main className="container mx-auto max-w-3xl px-4 py-8 sm:py-10">
       <header className="mb-8">
-        <p className="text-sm font-medium text-muted-foreground">Account</p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight">Settings</h1>
-        <p className="mt-2 text-muted-foreground">Manage account notifications and security.</p>
+        <p className="text-sm font-medium text-muted-foreground">{dictionary.settings.eyebrow}</p>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight">{dictionary.settings.title}</h1>
+        <p className="mt-2 text-muted-foreground">{dictionary.settings.intro}</p>
       </header>
 
       <div className="space-y-5">
@@ -49,22 +54,22 @@ export default async function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserRound aria-hidden="true" className="size-5" />
-              Account
+              {dictionary.settings.accountTitle}
             </CardTitle>
-            <CardDescription>Your sign-in email and session controls.</CardDescription>
+            <CardDescription>{dictionary.settings.accountDescription}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
-                <p className="text-sm text-muted-foreground">Email address</p>
+                <p className="text-sm text-muted-foreground">{dictionary.settings.emailAddress}</p>
                 <p className="mt-1 break-all font-medium">{user.email}</p>
                 <Link className="mt-2 inline-block text-sm underline underline-offset-4" href="/privacy">
-                  Privacy notice
+                  {dictionary.common.privacyNotice}
                 </Link>
               </div>
               <SignOutButton className="min-h-11 w-full sm:w-auto" variant="outline">
                 <LogOut aria-hidden="true" className="size-4" />
-                Sign out
+                {dictionary.common.signOut}
               </SignOutButton>
             </div>
             <div className="border-t pt-5">
@@ -77,9 +82,9 @@ export default async function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Laptop aria-hidden="true" className="size-5" />
-              Active sessions
+              {dictionary.settings.activeSessionsTitle}
             </CardTitle>
-            <CardDescription>Review where you are signed in. Revoking signs out every other browser.</CardDescription>
+            <CardDescription>{dictionary.settings.activeSessionsDescription}</CardDescription>
           </CardHeader>
           <CardContent>
             <SessionList sessions={sessionRows} />
@@ -90,9 +95,9 @@ export default async function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bell aria-hidden="true" className="size-5" />
-              Notifications
+              {dictionary.settings.notificationsTitle}
             </CardTitle>
-            <CardDescription>Choose whether we email you about guest access to your lockers.</CardDescription>
+            <CardDescription>{dictionary.settings.notificationsDescription}</CardDescription>
           </CardHeader>
           <CardContent>
             <GuestUnlockEmailToggle userId={user.id} initialEnabled={preferences.guestUnlockEmails} />
@@ -103,9 +108,9 @@ export default async function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <SunMoon aria-hidden="true" className="size-5" />
-              Appearance
+              {dictionary.settings.appearanceTitle}
             </CardTitle>
-            <CardDescription>Choose a theme for this browser, or match your device.</CardDescription>
+            <CardDescription>{dictionary.settings.appearanceDescription}</CardDescription>
           </CardHeader>
           <CardContent>
             <AppearanceSettings />
@@ -115,10 +120,23 @@ export default async function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <LockKeyhole aria-hidden="true" className="size-5" />
-              Device lock
+              <Languages aria-hidden="true" className="size-5" />
+              {dictionary.settings.languageTitle}
             </CardTitle>
-            <CardDescription>Use an optional PIN to quickly reopen the app on this browser.</CardDescription>
+            <CardDescription>{dictionary.settings.languageDescription}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LanguageSettings initialLocale={locale} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <LockKeyhole aria-hidden="true" className="size-5" />
+              {dictionary.settings.deviceLockTitle}
+            </CardTitle>
+            <CardDescription>{dictionary.settings.deviceLockDescription}</CardDescription>
           </CardHeader>
           <CardContent>
             <PinSettings />
@@ -129,16 +147,12 @@ export default async function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive-text">
               <ShieldCheck aria-hidden="true" className="size-5" />
-              Danger zone
+              {dictionary.settings.dangerTitle}
             </CardTitle>
-            <CardDescription>
-              Permanently remove your Smart Locker account and the data associated with it.
-            </CardDescription>
+            <CardDescription>{dictionary.settings.dangerDescription}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="max-w-xl text-sm text-muted-foreground">
-              Your lockers, share links, access history, sign-in sessions, and invite entry will be deleted.
-            </p>
+            <p className="max-w-xl text-sm text-muted-foreground">{dictionary.settings.dangerBody}</p>
             <DeleteAccountDialog />
           </CardContent>
         </Card>

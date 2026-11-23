@@ -1,7 +1,8 @@
-import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it } from "vitest"
+import { I18nProvider } from "@/components/i18n-provider"
 import { PinPad } from "@/components/pin-pad"
+import { en } from "@/lib/i18n/dictionaries/en"
 import {
   clearPinState,
   generatePinSalt,
@@ -123,12 +124,20 @@ describe("local PIN hashing", () => {
   })
 
   it("gives the keypad delete control an accessible name", () => {
-    const markup = renderToStaticMarkup(createElement(PinPad, { onComplete: () => {} }))
+    const markup = renderToStaticMarkup(
+      <I18nProvider locale="en" dictionary={en}>
+        <PinPad onComplete={() => {}} />
+      </I18nProvider>,
+    )
     expect(markup).toContain('aria-label="Delete last digit"')
   })
 
   it("disables keypad buttons while a PIN verification is pending", () => {
-    const markup = renderToStaticMarkup(createElement(PinPad, { onComplete: () => {}, disabled: true }))
+    const markup = renderToStaticMarkup(
+      <I18nProvider locale="en" dictionary={en}>
+        <PinPad onComplete={() => {}} disabled />
+      </I18nProvider>,
+    )
     const firstNumberButton = markup.match(/<button[^>]*>1<\/button>/)?.[0]
     expect(firstNumberButton).toContain('disabled=""')
   })

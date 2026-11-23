@@ -2,10 +2,12 @@
 
 import { useActionState, useEffect, useRef } from "react"
 import { requestMagicLink } from "@/app/auth/actions"
+import { useI18n } from "@/components/i18n-provider"
 import { initialRequestMagicLinkState } from "@/lib/auth/magic-link-state"
 import { toast } from "@/hooks/use-toast"
 
 export function AuthForm({ notice }: { notice: string | null }) {
+  const { dictionary } = useI18n()
   const [state, formAction, isPending] = useActionState(requestMagicLink, initialRequestMagicLinkState)
   const shownNotice = useRef(false)
   const shownAt = useRef(0)
@@ -26,7 +28,7 @@ export function AuthForm({ notice }: { notice: string | null }) {
     <form action={formAction} className="space-y-5">
       <div className="space-y-2">
         <label className="text-sm font-medium" htmlFor="email">
-          Invited email address
+          {dictionary.auth.emailLabel}
         </label>
         <input
           autoComplete="email"
@@ -37,7 +39,7 @@ export function AuthForm({ notice }: { notice: string | null }) {
           required
           type="email"
         />
-        <p className="text-sm text-muted-foreground">We’ll email you a secure sign-in link.</p>
+        <p className="text-sm text-muted-foreground">{dictionary.auth.emailHint}</p>
       </div>
       <button
         aria-busy={isPending}
@@ -45,7 +47,7 @@ export function AuthForm({ notice }: { notice: string | null }) {
         disabled={isPending}
         type="submit"
       >
-        {isPending ? "Sending…" : "Send sign-in link"}
+        {isPending ? dictionary.auth.sending : dictionary.auth.send}
       </button>
     </form>
   )

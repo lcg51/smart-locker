@@ -5,6 +5,7 @@ import { sendGuestUnlockEmail } from "@/lib/email"
 import { getEnv } from "@/lib/env"
 import { getLockProvider } from "@/lib/locks"
 import type { LockProvider } from "@/lib/locks/types"
+import { isLocale } from "@/lib/i18n/config"
 import { getRateLimiter } from "@/lib/rate-limit"
 import type { RateLimiter } from "@/lib/rate-limit"
 import { isLockCommandsEnabled, isSharingEnabled } from "@/lib/ops/controls"
@@ -30,6 +31,7 @@ type ResolvedGrantData = {
     user: {
       email: string | null
       guestUnlockEmails: boolean
+      locale: string
     }
   }
 }
@@ -73,6 +75,7 @@ async function resolveShareTokenAt(token: string, now: Date): Promise<ResolvedGr
             select: {
               email: true,
               guestUnlockEmails: true,
+              locale: true,
             },
           },
         },
@@ -238,6 +241,7 @@ export async function redeemShareToken({
       lockerName: grant.locker.name,
       guestLabel: grant.guestLabel,
       unlockedAt: now,
+      locale: isLocale(grant.locker.user.locale) ? grant.locker.user.locale : "en",
     }
     try {
       await sendEmail(email)

@@ -89,6 +89,22 @@ describe("sendGuestUnlockEmail", () => {
       unlockedAt: new Date("2025-04-05T06:07:08.000Z"),
     })).resolves.toBe(false)
   })
+
+  it("writes the notification in Spanish when asked", async () => {
+    const getRequest = stubResend({ body: { id: "email_es" }, status: 200 })
+
+    await expect(sendGuestUnlockEmail({
+      to: "owner@example.com",
+      lockerName: "Kitchen",
+      guestLabel: "Limpieza",
+      unlockedAt: new Date("2025-04-05T06:07:08.000Z"),
+      locale: "es",
+    })).resolves.toBe(true)
+
+    const body = JSON.parse(String(getRequest().requestInit?.body)) as { subject: string; text: string }
+    expect(body.subject).toBe("Kitchen se ha desbloqueado")
+    expect(body.text).toContain("Limpieza desbloqueó Kitchen")
+  })
 })
 
 describe("guest unlock email integration", () => {
@@ -109,6 +125,24 @@ describe("guest unlock email integration", () => {
     expect(body.subject).toBe("Kitchen was unlocked")
     expect(body.text).toContain("Ana")
     expect(await prisma.lockEvent.count({ where: { lockerId: locker.id, success: true } })).toBe(1)
+  })
+
+  it("uses the owner's language for the notification", async () => {
+    const { userId, locker } = await seed()
+    await prisma.user.update({ where: { id: userId }, data: { locale: "es" } })
+    const { token } = await createShareGrant({ userId, lockerId: locker.id, guestLabel: "Limpieza" })
+    const getRequest = stubResend({ body: { id: "email_es_int" }, status: 200 })
+
+    await expect(redeemShareToken({
+      token,
+      ip: "192.0.2.13",
+      provider: new MockLockProvider(),
+      limiter: { async check() { return true } },
+    })).resolves.toEqual({ ok: true, relockAt: expect.any(Date) })
+
+    const body = JSON.parse(String(getRequest().requestInit?.body)) as { subject: string; text: string }
+    expect(body.subject).toBe("Kitchen se ha desbloqueado")
+    expect(body.text).toContain("Limpieza desbloqueó Kitchen")
   })
 
   it("does not send if the owner has disabled guest unlock emails", async () => {

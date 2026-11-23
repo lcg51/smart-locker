@@ -77,4 +77,19 @@ describe("describeEvent", () => {
       errorCode: "something_new",
     }).detail).toBe("The locker did not respond.")
   })
+
+  it("describes an event in Spanish", () => {
+    expect(describeEvent({
+      actorType: "GUEST",
+      grant: { guestLabel: "Limpieza" },
+      action: "UNLOCK",
+      success: false,
+      errorCode: "provider_error",
+    }, "es")).toEqual({
+      actor: "Limpieza",
+      action: "Desbloqueo",
+      result: "Fallido",
+      detail: "El proveedor de cerraduras no respondió.",
+    })
+  })
 })

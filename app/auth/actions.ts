@@ -6,7 +6,7 @@ import { z } from "zod"
 import { signIn } from "@/auth"
 import type { RequestMagicLinkState } from "@/lib/auth/magic-link-state"
 import { checkMagicLinkRateLimit } from "@/lib/auth/rate-limit"
-import { SIGN_IN_EMAIL_ERROR, SIGN_IN_SEND_ERROR } from "@/lib/auth/sign-in-notice"
+import { getDictionary, getLocale } from "@/lib/i18n/server"
 
 const emailSchema = z.string().trim().email()
 
@@ -14,8 +14,9 @@ export async function requestMagicLink(
   _previous: RequestMagicLinkState,
   formData: FormData,
 ): Promise<RequestMagicLinkState> {
+  const dictionary = getDictionary(await getLocale())
   const parsed = emailSchema.safeParse(formData.get("email"))
-  if (!parsed.success) return { error: SIGN_IN_EMAIL_ERROR, at: Date.now() }
+  if (!parsed.success) return { error: dictionary.auth.notice.email, at: Date.now() }
 
   const email = parsed.data
   const requestHeaders = await headers()
@@ -33,7 +34,7 @@ export async function requestMagicLink(
     // `signIn` redirects on success; rethrow Next's redirect instead of
     // reporting it as a delivery failure.
     unstable_rethrow(error)
-    return { error: SIGN_IN_SEND_ERROR, at: Date.now() }
+    return { error: dictionary.auth.notice.send, at: Date.now() }
   }
 
   return { error: null, at: Date.now() }

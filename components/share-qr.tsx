@@ -1,11 +1,14 @@
 "use client"
 
 import { QRCodeSVG } from "qrcode.react"
+import { useI18n } from "@/components/i18n-provider"
 
 export function ShareQr({ url }: { url: string }) {
+  const { dictionary } = useI18n()
+
   return (
     <div
-      aria-label="QR code for the share link"
+      aria-label={dictionary.share.qrAria}
       className="mx-auto w-fit rounded-lg bg-white p-3"
       role="img"
     >

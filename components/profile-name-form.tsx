@@ -2,12 +2,14 @@
 
 import { useState, useTransition } from "react"
 import { updateDisplayNameAction } from "@/app/actions/account"
+import { useI18n } from "@/components/i18n-provider"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "@/hooks/use-toast"
 
 export function ProfileNameForm({ currentName }: { currentName: string }) {
+  const { dictionary } = useI18n()
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -16,18 +18,18 @@ export function ProfileNameForm({ currentName }: { currentName: string }) {
     startTransition(async () => {
       const updated = await updateDisplayNameAction(formData)
       if (updated) {
-        toast({ title: "Display name updated." })
+        toast({ title: dictionary.settings.displayNameUpdated })
         return
       }
 
-      setError("Enter a name between 1 and 40 characters.")
+      setError(dictionary.settings.displayNameError)
     })
   }
 
   return (
     <form action={handleSubmit} className="space-y-3">
       <div className="space-y-2">
-        <Label htmlFor="displayName">Display name</Label>
+        <Label htmlFor="displayName">{dictionary.settings.displayName}</Label>
         <Input
           autoComplete="name"
           className="min-h-11"
@@ -37,10 +39,10 @@ export function ProfileNameForm({ currentName }: { currentName: string }) {
           name="name"
           required
         />
-        <p className="text-sm text-muted-foreground">Shown in your account details. 1–40 characters.</p>
+        <p className="text-sm text-muted-foreground">{dictionary.settings.displayNameHint}</p>
       </div>
       <Button className="min-h-11" disabled={isPending} type="submit" variant="outline">
-        {isPending ? "Saving…" : "Save name"}
+        {isPending ? dictionary.common.saving : dictionary.common.saveName}
       </Button>
       {error && (
         <p aria-live="polite" className="text-sm text-destructive-text" role="alert">

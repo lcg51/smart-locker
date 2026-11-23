@@ -1,7 +1,9 @@
 import { createHash } from "node:crypto"
 import { expect, test } from "@playwright/test"
 import { prisma } from "../lib/db"
-import { SIGN_IN_LINK_ERROR } from "../lib/auth/sign-in-notice"
+import { en } from "../lib/i18n/dictionaries/en"
+
+const SIGN_IN_LINK_ERROR = en.auth.notice.link
 
 const UNINVITED = "uninvited@example.com"
 

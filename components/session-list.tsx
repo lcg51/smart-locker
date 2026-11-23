@@ -3,8 +3,10 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { revokeOtherSessionsAction } from "@/app/actions/account"
+import { useI18n } from "@/components/i18n-provider"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/hooks/use-toast"
+import { fill } from "@/lib/i18n/format"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +30,7 @@ export type SessionRow = {
 
 export function SessionList({ sessions }: { sessions: SessionRow[] }) {
   const router = useRouter()
+  const { dictionary } = useI18n()
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -37,11 +40,13 @@ export function SessionList({ sessions }: { sessions: SessionRow[] }) {
       try {
         const result = await revokeOtherSessionsAction()
         toast({
-          title: result.revoked > 0 ? "Other sessions revoked." : "No other sessions to revoke.",
+          title: result.revoked > 0
+            ? dictionary.settings.othersRevoked
+            : dictionary.settings.noneToRevoke,
         })
         router.refresh()
       } catch {
-        setError("Couldn't revoke other sessions. Try again.")
+        setError(dictionary.settings.revokeOthersFailed)
       }
     })
   }
@@ -52,18 +57,26 @@ export function SessionList({ sessions }: { sessions: SessionRow[] }) {
         {sessions.map((session) => (
           <li className="rounded-md border p-3" key={session.id}>
             <div className="flex flex-wrap items-center gap-2">
-              <p className="font-medium">{session.isCurrent ? "This device" : "Another device"}</p>
+              <p className="font-medium">
+                {session.isCurrent ? dictionary.settings.thisDevice : dictionary.settings.anotherDevice}
+              </p>
               {session.isCurrent && (
                 <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
-                  Current
+                  {dictionary.settings.current}
                 </span>
               )}
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">{session.deviceLabel ?? "Unknown device"}</p>
-            <p className="text-sm text-muted-foreground">Created {session.createdAt}</p>
-            <p className="text-sm text-muted-foreground">Expires {session.expires}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{session.deviceLabel ?? dictionary.settings.unknownDevice}</p>
             <p className="text-sm text-muted-foreground">
-              Approximate location: {session.locationLabel ?? "unavailable"}
+              {fill(dictionary.settings.created, { time: session.createdAt })}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {fill(dictionary.settings.expires, { time: session.expires })}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {fill(dictionary.settings.approximateLocation, {
+                location: session.locationLabel ?? dictionary.settings.unavailable,
+              })}
             </p>
           </li>
         ))}
@@ -72,20 +85,18 @@ export function SessionList({ sessions }: { sessions: SessionRow[] }) {
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button className="min-h-11" disabled={isPending} type="button" variant="outline">
-            Revoke other sessions
+            {dictionary.settings.revokeOthers}
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Revoke other sessions?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This signs out every other browser. This device stays signed in.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{dictionary.settings.revokeOthersTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{dictionary.settings.revokeOthersBody}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="min-h-11" disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="min-h-11" disabled={isPending}>{dictionary.common.cancel}</AlertDialogCancel>
             <AlertDialogAction className="min-h-11" disabled={isPending} onClick={handleRevoke}>
-              {isPending ? "Revoking…" : "Revoke other sessions"}
+              {isPending ? dictionary.settings.revoking : dictionary.settings.revokeOthers}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

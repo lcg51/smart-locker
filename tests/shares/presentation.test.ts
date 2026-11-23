@@ -5,4 +5,10 @@ describe("formatShareExpiry", () => {
   it("formats a guest link expiry with an explicit timezone", () => {
     expect(formatShareExpiry(new Date("2026-11-02T15:30:00.000Z"))).toBe("Nov 2, 2026, 3:30 PM UTC")
   })
+
+  it("formats a guest link expiry in Spanish", () => {
+    const text = formatShareExpiry(new Date("2026-11-02T15:30:00.000Z"), "es")
+    expect(text).toContain("nov")
+    expect(text).toContain("UTC")
+  })
 })
