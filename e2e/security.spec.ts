@@ -44,7 +44,7 @@ test("a resident cannot open another resident's locker", async ({ browser }) => 
     const locker = await prisma.locker.findFirstOrThrow({ where: { userId: ana.id } })
 
     await page.goto(`/dashboard/lockers/${locker.id}`)
-    await expect(page.getByText("This page could not be found")).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible()
   } finally {
     await other.close()
   }

@@ -3,7 +3,7 @@ import type { Locale } from "@/lib/i18n/config"
 import { fill } from "@/lib/i18n/format"
 
 export function formatShareExpiry(date: Date, locale: Locale = "en"): string {
-  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en", {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-GB", {
     year: "numeric",
     month: "short",
     day: "numeric",

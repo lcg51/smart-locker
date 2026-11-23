@@ -44,6 +44,19 @@ test("a resident and a guest can use the app in Spanish", async ({ browser }) =>
   await guest.close()
 })
 
+test("a Spanish browser gets a Spanish not-found page", async ({ browser }) => {
+  const context = await browser.newContext({ locale: "es-ES" })
+  const page = await context.newPage()
+  const response = await page.goto("/this-page-does-not-exist")
+
+  expect(response?.status()).toBe(404)
+  await expect(page.getByRole("heading", { name: "Página no encontrada" })).toBeVisible()
+  await expect(page.getByRole("link", { name: "Volver a Smart Locker" })).toBeVisible()
+  await expect(page.locator("html")).toHaveAttribute("lang", "es")
+
+  await context.close()
+})
+
 test("a Spanish-browser sign-in stores the locale used for email", async ({ browser }) => {
   const context = await browser.newContext({ locale: "es-ES" })
   const page = await context.newPage()

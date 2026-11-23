@@ -75,7 +75,7 @@ export function ExtendShareDialog({ grant }: { grant: ActiveShareGrant }) {
         <DialogHeader>
           <DialogTitle>{dictionary.share.extendTitle}</DialogTitle>
           <DialogDescription>
-            {fill(dictionary.share.extendBody, { guest: grant.guestLabel || dictionary.share.thisGuest })}
+            {fill(dictionary.share.extendBody, { guest: grant.guestLabel || dictionary.share.thisGuestLower })}
           </DialogDescription>
         </DialogHeader>
 
