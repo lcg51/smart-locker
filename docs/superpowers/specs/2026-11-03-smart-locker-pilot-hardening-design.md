@@ -2,7 +2,7 @@
 
 Date: 2026-11-03
 Status: Approved for planning (user, 2026-11-03)
-Spec of record for Tasks 16–34.
+Spec of record for Tasks 16–38.
 
 ## Intent
 
@@ -55,7 +55,7 @@ bug, not a feature request, and it is Task 16.
 - Keep Next.js 16 App Router, React 19, TypeScript strict, Prisma 6.19.3,
   Tailwind v4, shadcn/ui, Vitest, and Playwright.
 - The guest page must work on iPhone Safari with no install step.
-- English is the first pilot language; Spanish is Task 27.
+- English and Spanish are supported; Spanish shipped in Task 27.
 - Every task is TDD except pure configuration or documentation. Those tasks
   must still carry a checkable verification command and a manual acceptance
   step.
@@ -356,6 +356,60 @@ code. The owner records the decision and the conditions that would reopen it.
   subscription. The decisive constraints are EU data residency, gateway support,
   and the cost at pilot scale and at ten times pilot scale.
 
+### 19. Spanish UI finishing pass (Task 35)
+
+- Add a localized root `app/not-found.tsx`. A missing page uses the active
+  locale, keeps the resident/guest distinction neutral, and links to `/` so a
+  resident lands on the dashboard and a guest lands on sign-in.
+- Close the residual gaps Task 27 left: a required localized dialog close label,
+  the device-lock sign-out wording, the mid-sentence guest phrase, an `en-GB`
+  English share-expiry format, and the Spanish copy nits (email label, guest
+  notification title, email time grammar, vivienda wording, retry label).
+- The framework 500/`global-error` page stays English: it renders outside the
+  request locale, and a client-side language guess would add a hydration
+  mismatch for little value. Document that as accepted.
+- Acceptance: a Spanish browser sees a Spanish 404 with `<html lang="es">`; the
+  security and localization E2E suites pass with the new not-found copy.
+
+### 20. Localized sign-in email (Task 36)
+
+- Override the Resend provider's `sendVerificationRequest` and render a
+  plain-text subject and body from the active locale.
+- Resolve the locale from the request with `getLocale()`; fall back to English
+  when the send runs outside a request context.
+- Keep the copy neutral: it must not reveal invite status or whether an account
+  exists. The sign-in URL is unchanged and never logged.
+- A Resend failure throws, so Auth.js reports a generic delivery failure instead
+  of claiming the link was sent.
+- Acceptance: unit tests cover the English and Spanish content and the provider
+  failure path.
+
+### 21. Empty-state guidance for residents without lockers (Task 37)
+
+- A resident with no lockers sees a clear explanation that the building
+  administrator assigns lockers to the apartment, plus a **Check again** control
+  that re-runs the server page.
+- The copy follows the active locale and stays resident-only. It must not show
+  vendor identifiers, owner contact details, or another resident's data.
+- Acceptance: E2E signs in a user with no lockers and checks the English and
+  Spanish empty states and the reload control.
+
+### 22. Relock scheduler (Task 38)
+
+- Vercel Hobby cannot run a minute cron, so an external scheduler calls
+  `GET /api/cron/relock` every minute with `Authorization: Bearer $CRON_SECRET`.
+- Choose and document one provider. Upstash QStash is the recommendation because
+  the project already integrates Upstash and it supports one-minute schedules
+  and custom headers. cron-job.org is an acceptable alternative. GitHub Actions
+  schedules are rejected: their minimum interval is five minutes and their
+  timing is unreliable.
+- Record the achieved interval and a closed-tab relock measurement in
+  `docs/relock-scheduler.md`. The locker must relock within two intervals.
+- This is an operations task with no app-code change. If verification exposes a
+  route bug, fix it here as a bug.
+- Acceptance: `401` without the bearer, `200` with it, a closed-tab guest relock
+  within two intervals, and the provider and interval recorded.
+
 ## Task map
 
 | # | Task | Phase | Depends on | Acceptance in one line |
@@ -379,6 +433,10 @@ code. The owner records the decision and the conditions that would reopen it.
 | 32 | TTLock API quota reduction and guard | 2.5 | 15, 16 | No background polling, brief state reuse, and a quota guard that keeps safety commands working. |
 | 33 | Evaluate local Bluetooth control | 3 | 32 | A decision document answers licence, platform, feature loss, security, and effort. |
 | 34 | Evaluate TTLock on-premise | 3 | 32 | A decision document answers cost, EU residency, API differences, and hardware support. |
+| 35 | Spanish UI finishing pass | 3 | 27 | A Spanish 404 and the remaining English/copy gaps are fixed. |
+| 36 | Localized sign-in email | 3 | 04, 27 | The magic-link email arrives in the requester's language with neutral copy. |
+| 37 | Empty-state guidance for residents without lockers | 2 | 05, 10, 27 | A resident with no lockers sees the next step and can recheck. |
+| 38 | Relock scheduler runbook and verification | 1.5 | 16, 21 | A minute scheduler calls the fallback and closed-tab guests relock within two intervals. |
 
 ## Sequencing
 
@@ -392,8 +450,12 @@ code. The owner records the decision and the conditions that would reopen it.
   gates: no production code until the owner records a go.
 - Task 31 runs after Task 29 so the share-extension dialog exists. It is UX
   polish and should not delay the pilot-critical set.
-- Task 27 is Phase 3. Do not start it until the English pilot-critical and UX
-  work is stable.
+- Tasks 35–37 follow Task 27, and Task 37 also needs Tasks 05 and 10. They are
+  finishing work and must not delay Task 38.
+- Task 38 is pilot-critical operations: complete it before inviting residents.
+  It can run in parallel with Tasks 35–37 because it changes no app code.
+- Task 27 is complete. Tasks 35–37 finish the remaining localization and
+  empty-state work without reopening the pilot-critical set.
 - Task 15 remains blocked on TTLock credentials and a test lock. Do not replace
   the mock provider for the pilot before Task 15 is complete.
 
@@ -402,8 +464,9 @@ code. The owner records the decision and the conditions that would reopen it.
 - The exact CSP directive allowlist for Vercel Analytics and Next.js dev
   tooling; verify with the deployed build rather than guessing.
 - Whether the one-minute cron fallback is fast enough for closed guest tabs, or
-  whether the pilot should add a delayed job service. The design assumes the
-  cron is acceptable for the first pilot.
+  whether the pilot should add a delayed job service. Task 38 measures an
+  external one-minute scheduler; if the measured latency is unacceptable,
+  revisit a delayed job service.
 - Whether owner unlocks should also auto-relock later. This design keeps owner
   unlocks manual so residents can load groceries without a countdown fight.
 - The PWA icon artwork; reuse the existing lock mark with the correct safe area.
