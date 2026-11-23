@@ -7,7 +7,7 @@ const es = getDictionary("es")
 
 describe("formatShareExpiry", () => {
   it("formats a guest link expiry with an explicit timezone", () => {
-    expect(formatShareExpiry(new Date("2026-11-02T15:30:00.000Z"))).toBe("Nov 2, 2026, 3:30 PM UTC")
+    expect(formatShareExpiry(new Date("2026-11-02T15:30:00.000Z"))).toBe("2 Nov 2026, 15:30 UTC")
   })
 
   it("formats a guest link expiry in Spanish", () => {

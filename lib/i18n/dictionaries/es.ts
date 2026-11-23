@@ -8,7 +8,7 @@ export const es = {
   },
   common: {
     appName: "Smart Locker",
-    apartmentAccess: "Acceso al apartamento",
+    apartmentAccess: "Acceso a la vivienda",
     account: "Cuenta",
     activity: "Actividad",
     settings: "Ajustes",
@@ -36,7 +36,7 @@ export const es = {
     lastChecked: "Última comprobación: {time}",
     notCheckedYet: "Aún no comprobado",
     refreshStatus: "Actualizar estado",
-    retryStatus: "Reintentar estado",
+    retryStatus: "Reintentar comprobación",
     statusRefreshFailed: "No se pudo actualizar el estado.",
     unlock: "Desbloquear",
     lock: "Bloquear",
@@ -53,7 +53,7 @@ export const es = {
   auth: {
     title: "Smart Locker",
     subtitle: "Inicia sesión para gestionar las taquillas de tu vivienda.",
-    emailLabel: "Correo electrónico invitado",
+    emailLabel: "Dirección de correo invitada",
     emailHint: "Te enviaremos un enlace de acceso seguro.",
     send: "Enviar enlace de acceso",
     sending: "Enviando…",
@@ -67,6 +67,11 @@ export const es = {
       email: "Introduce una dirección de correo válida.",
       send: "No se pudo enviar el enlace de acceso. Inténtalo de nuevo en un momento.",
     },
+  },
+  notFound: {
+    title: "Página no encontrada",
+    body: "La página que buscas no existe o se ha movido.",
+    back: "Volver a Smart Locker",
   },
   onboarding: {
     eyebrow: "Configuración de la vivienda",
@@ -90,14 +95,14 @@ export const es = {
     saveFirst: "Guarda el nombre de la taquilla antes de confirmarla.",
   },
   dashboard: {
-    eyebrow: "Acceso al apartamento",
+    eyebrow: "Acceso a la vivienda",
     title: "Tus taquillas",
     intro: "Consulta el estado y controla las taquillas de tu vivienda.",
     emptyTitle: "Aún no hay taquillas",
     emptyBody:
       "Las taquillas de tu vivienda aparecerán aquí cuando la administración del edificio configure tu cuenta.",
     listLabel: "Tus taquillas",
-    apartmentLocker: "Taquilla del apartamento",
+    apartmentLocker: "Taquilla de la vivienda",
     details: "Detalles de la taquilla",
   },
   locker: {
@@ -107,7 +112,7 @@ export const es = {
     activeSharesHint: "Revoca un enlace en cualquier momento para retirar el acceso de invitados.",
   },
   activity: {
-    eyebrow: "Acceso al apartamento",
+    eyebrow: "Acceso a la vivienda",
     title: "Actividad",
     intro: "Registro de acceso a las taquillas de tu vivienda.",
     filterLabel: "Taquilla",
@@ -191,6 +196,7 @@ export const es = {
     thisLocker: "esta taquilla",
     theLocker: "la taquilla",
     thisGuest: "Este invitado",
+    thisGuestLower: "este invitado",
     keepLink: "Mantener enlace",
     revokeLink: "Revocar enlace",
     revoking: "Revocando…",
@@ -310,7 +316,7 @@ export const es = {
     displayNameHint: "Se muestra en los detalles de tu cuenta. De 1 a 40 caracteres.",
     displayNameUpdated: "Nombre visible actualizado.",
     displayNameError: "Introduce un nombre de entre 1 y 40 caracteres.",
-    guestEmailsTitle: "Correos de desbloqueo por invitados",
+    guestEmailsTitle: "Avisos de desbloqueo de invitados",
     guestEmailsDescription:
       "Recibe un correo cuando un invitado desbloquee una de tus taquillas.",
     preferenceSaved: "Preferencia guardada.",
@@ -360,7 +366,7 @@ export const es = {
     continueWithout: "Continuar sin PIN del dispositivo",
     checkingPin: "Comprobando PIN…",
     protected: "Tu cuenta sigue protegida por el acceso mediante correo.",
-    signOutInstead: "Cerrar sesión",
+    signOutInstead: "Cerrar sesión para quitar el bloqueo",
     deleteDigit: "Borrar el último dígito",
   },
   privacy: {
@@ -435,7 +441,7 @@ export const es = {
   },
   email: {
     guestSubject: "{locker} se ha desbloqueado",
-    guestBody: "{guest} desbloqueó {locker} a las {time}.",
+    guestBody: "{guest} desbloqueó {locker} el {time}.",
     guestFallback: "Un invitado",
   },
 } satisfies Dictionary

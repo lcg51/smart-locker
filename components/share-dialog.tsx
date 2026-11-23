@@ -106,7 +106,7 @@ export function ShareDialog({ lockerId, lockerName }: { lockerId: string; locker
           {dictionary.share.shareAccess}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md" showCloseButton={false}>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md" closeLabel={dictionary.common.close} showCloseButton={false}>
         <DialogClose asChild>
           <Button aria-label={dictionary.share.closeDialog} className="absolute right-3 top-3 size-11" size="icon" type="button" variant="ghost">
             <X aria-hidden="true" className="size-4" />

@@ -66,6 +66,11 @@ export const en = {
       send: "We couldn’t send the sign-in link. Try again in a moment.",
     },
   },
+  notFound: {
+    title: "Page not found",
+    body: "The page you are looking for doesn’t exist or has moved.",
+    back: "Back to Smart Locker",
+  },
   onboarding: {
     eyebrow: "Apartment setup",
     title: "Confirm your lockers",
@@ -188,6 +193,7 @@ export const en = {
     thisLocker: "this locker",
     theLocker: "the locker",
     thisGuest: "This guest",
+    thisGuestLower: "this guest",
     keepLink: "Keep link",
     revokeLink: "Revoke link",
     revoking: "Revoking…",
