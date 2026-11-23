@@ -437,6 +437,9 @@ export const en = {
     guestSubject: "{locker} was unlocked",
     guestBody: "{guest} unlocked {locker} at {time}.",
     guestFallback: "A guest",
+    signInSubject: "Sign in to Smart Locker",
+    signInBody:
+      "Open this link to sign in to Smart Locker:\n\n{url}\n\nIf you didn’t request this email, you can ignore it. The link expires in 24 hours.",
   },
 }
 
