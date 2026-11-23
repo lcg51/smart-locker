@@ -16,6 +16,7 @@ model User {
   vendorGatewayId   String?
   gatewayLastSeenAt DateTime?
   guestUnlockEmails Boolean   @default(true)
+  locale            String    @default("en")
   createdAt         DateTime  @default(now())
   deletedAt         DateTime?
   accounts          Account[]

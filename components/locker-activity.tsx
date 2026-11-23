@@ -5,22 +5,26 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { describeEvent, formatEventTime } from "@/lib/events/presentation"
+import { getDictionary, getLocale } from "@/lib/i18n/server"
 
 type ActivityEvent = LockEvent & {
   grant: { guestLabel: string | null } | null
 }
 
-export function LockerActivity({ events, lockerId }: { events: ActivityEvent[]; lockerId: string }) {
+export async function LockerActivity({ events, lockerId }: { events: ActivityEvent[]; lockerId: string }) {
+  const locale = await getLocale()
+  const dictionary = getDictionary(locale)
+
   return (
     <section aria-labelledby="recent-activity-title" className="mt-8">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 id="recent-activity-title" className="text-xl font-semibold">Recent activity</h2>
-          <p className="mt-1 text-sm text-muted-foreground">The latest access events for this locker.</p>
+          <h2 id="recent-activity-title" className="text-xl font-semibold">{dictionary.activity.recentTitle}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{dictionary.activity.recentIntro}</p>
         </div>
         <Button asChild className="min-h-11 self-start px-0 sm:self-auto" variant="link">
           <Link href={`/dashboard/activity?lockerId=${lockerId}`}>
-            View all activity
+            {dictionary.activity.viewAll}
             <ArrowRight aria-hidden="true" className="size-4" />
           </Link>
         </Button>
@@ -28,28 +32,28 @@ export function LockerActivity({ events, lockerId }: { events: ActivityEvent[]; 
 
       {events.length === 0 ? (
         <div className="rounded-xl border border-dashed bg-card px-6 py-10 text-center">
-          <p className="text-sm text-muted-foreground">No activity for this locker yet.</p>
+          <p className="text-sm text-muted-foreground">{dictionary.activity.recentEmpty}</p>
         </div>
       ) : (
         <div className="rounded-xl border bg-card">
           <Table>
-            <TableCaption className="sr-only">Recent access events for this locker</TableCaption>
+            <TableCaption className="sr-only">{dictionary.activity.recentCaption}</TableCaption>
             <TableHeader>
               <TableRow>
-                <TableHead scope="col">Time</TableHead>
-                <TableHead scope="col">Actor</TableHead>
-                <TableHead scope="col">Action</TableHead>
-                <TableHead scope="col">Result</TableHead>
+                <TableHead scope="col">{dictionary.activity.time}</TableHead>
+                <TableHead scope="col">{dictionary.activity.actor}</TableHead>
+                <TableHead scope="col">{dictionary.activity.action}</TableHead>
+                <TableHead scope="col">{dictionary.activity.result}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {events.map((event) => {
-                const description = describeEvent(event)
+                const description = describeEvent(event, locale)
                 return (
                   <TableRow key={event.id}>
                     <TableCell>
                       <time dateTime={event.createdAt.toISOString()}>
-                        {formatEventTime(event.createdAt)}
+                        {formatEventTime(event.createdAt, locale)}
                       </time>
                     </TableCell>
                     <TableCell>{description.actor}</TableCell>

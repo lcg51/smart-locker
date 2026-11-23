@@ -4,7 +4,9 @@ import { useEffect, useReducer, useRef, useTransition } from "react"
 import { Check, LockKeyhole, LockKeyholeOpen } from "lucide-react"
 import { redeemShare, relockShare } from "@/app/share/[token]/actions"
 import type { GuestRedeemResult } from "@/app/share/[token]/actions"
+import { useI18n } from "@/components/i18n-provider"
 import { Button } from "@/components/ui/button"
+import type { ClientDictionary } from "@/lib/i18n/dictionaries"
 import { isGuestUnlockDisabled } from "@/lib/shares/guest-ui-state"
 import {
   createGuestUnlockState,
@@ -30,10 +32,13 @@ function secondsUntil(deadline: number): number {
   return Math.max(0, Math.ceil((deadline - Date.now()) / 1_000))
 }
 
-function getErrorMessage(result: Extract<GuestRedeemResult, { ok: false }>): string {
-  if (result.reason === "rate_limited") return "Too many attempts. Please wait a minute and try again."
-  if (result.reason === "lock_failed") return "The locker couldn't be unlocked. Please try again."
-  return "This link is no longer available. Ask for a new link."
+function getErrorMessage(
+  result: Extract<GuestRedeemResult, { ok: false }>,
+  dictionary: ClientDictionary,
+): string {
+  if (result.reason === "rate_limited") return dictionary.share.errorRateLimited
+  if (result.reason === "lock_failed") return dictionary.share.errorLockFailed
+  return dictionary.share.errorUnavailable
 }
 
 export function GuestUnlock({
@@ -45,6 +50,7 @@ export function GuestUnlock({
   initialRelockAt?: string | null
   relockOnly?: boolean
 }) {
+  const { dictionary } = useI18n()
   const initialDeadline = parseDeadline(initialRelockAt)
   const [isPending, startTransition] = useTransition()
   const [state, dispatch] = useReducer(
@@ -103,7 +109,7 @@ export function GuestUnlock({
         if (!result.ok) {
           dispatch({
             type: "unlockFailed",
-            message: getErrorMessage(result),
+            message: getErrorMessage(result, dictionary),
             terminal: TERMINAL_UNLOCK_REASONS.includes(result.reason),
           })
           return
@@ -119,7 +125,7 @@ export function GuestUnlock({
       } catch {
         dispatch({
           type: "unlockFailed",
-          message: "We couldn't complete that request. Check your connection and try again.",
+          message: dictionary.share.errorNetwork,
           terminal: false,
         })
       }
@@ -143,34 +149,39 @@ export function GuestUnlock({
         <div aria-live="polite" className="rounded-lg border border-emerald-700/20 bg-emerald-50 p-4 text-emerald-950 dark:border-emerald-300/20 dark:bg-emerald-950 dark:text-emerald-50" role="status">
           <p className="flex items-center gap-2 font-medium">
             <Check aria-hidden="true" className="size-4" />
-            {relockOnly ? "Relocking locker" : "Locker unlocked"}
+            {relockOnly ? dictionary.share.relockingLocker : dictionary.share.unlockedTitle}
           </p>
           {state.status === "relocked" ? (
             <p className="mt-1 text-sm opacity-80">
-              Locker relocked.{state.canUnlockAgain ? " You can unlock it again if needed." : " This link has no unlocks remaining."}
+              {dictionary.share.relocked}
+              {state.canUnlockAgain
+                ? dictionary.share.canUnlockAgain
+                : dictionary.share.noUnlocksRemainingInline}
             </p>
           ) : state.status === "relock-failed" ? (
             <div className="mt-1 space-y-2">
-              <p className="text-sm opacity-80">The locker didn&apos;t relock. Try again.</p>
+              <p className="text-sm opacity-80">{dictionary.share.relockFailed}</p>
               <Button
                 onClick={() => dispatch({ type: "retryRelock" })}
                 size="sm"
                 type="button"
                 variant="outline"
               >
-                Try relock
+                {dictionary.share.tryRelock}
               </Button>
             </div>
           ) : isRelocking || (state.relockAt !== null && state.secondsRemaining <= 0) ? (
-            <p className="mt-1 text-sm opacity-80">Relocking…</p>
+            <p className="mt-1 text-sm opacity-80">{dictionary.share.relocking}</p>
           ) : isCoolingDown ? (
             <p className="mt-1 text-sm opacity-80">
-              It will relock automatically in <span aria-live="off" className="font-semibold tabular-nums">{state.secondsRemaining}</span> seconds.
+              {dictionary.share.relockCountdownBefore}
+              <span aria-live="off" className="font-semibold tabular-nums">{state.secondsRemaining}</span>
+              {dictionary.share.relockCountdownAfter}
             </p>
           ) : state.canUnlockAgain ? (
-            <p className="mt-1 text-sm opacity-80">The locker should now be relocked. You can unlock it again if needed.</p>
+            <p className="mt-1 text-sm opacity-80">{dictionary.share.relockedNow}</p>
           ) : (
-            <p className="mt-1 text-sm opacity-80">This link has no unlocks remaining.</p>
+            <p className="mt-1 text-sm opacity-80">{dictionary.share.noUnlocksRemaining}</p>
           )}
         </div>
       )}
@@ -187,22 +198,22 @@ export function GuestUnlock({
           {isPending ? (
             <>
               <LockKeyhole aria-hidden="true" className="size-5" />
-              Unlocking…
+              {dictionary.share.unlocking}
             </>
           ) : state.relockAt !== null ? (
             <>
               <LockKeyholeOpen aria-hidden="true" className="size-5" />
-              Unlocked
+              {dictionary.share.unlockedButton}
             </>
           ) : !state.canUnlockAgain ? (
             <>
               <LockKeyhole aria-hidden="true" className="size-5" />
-              {showStatus ? "No unlocks remaining" : "Link unavailable"}
+              {showStatus ? dictionary.share.noUnlocksRemaining : dictionary.share.linkUnavailable}
             </>
           ) : (
             <>
               <LockKeyhole aria-hidden="true" className="size-5" />
-              Unlock locker
+              {dictionary.share.unlockLocker}
             </>
           )}
         </Button>

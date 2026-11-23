@@ -1,10 +1,14 @@
 import type { MetadataRoute } from "next"
+import { getDictionary } from "@/lib/i18n/dictionaries"
+import { getLocale } from "@/lib/i18n/server"
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const dictionary = getDictionary(await getLocale())
+
   return {
-    name: "Smart Locker",
-    short_name: "Smart Locker",
-    description: "Manage your apartment lockers and share temporary guest access.",
+    name: dictionary.common.appName,
+    short_name: dictionary.common.appName,
+    description: dictionary.meta.manifestDescription,
     start_url: "/dashboard",
     display: "standalone",
     background_color: "#ffffff",

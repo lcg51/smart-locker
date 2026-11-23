@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import { Clock3, KeyRound, PackageCheck } from "lucide-react"
 import { GuestUnlock } from "@/components/guest-unlock"
+import { fill } from "@/lib/i18n/format"
+import { getDictionary, getLocale } from "@/lib/i18n/server"
 import { formatShareExpiry } from "@/lib/shares/presentation"
 import { resolveRelockState, resolveShareToken } from "@/lib/shares/redeem"
 
@@ -15,6 +17,8 @@ export default async function GuestSharePage({
   params: Promise<{ token: string }>
 }) {
   const { token } = await params
+  const locale = await getLocale()
+  const dictionary = getDictionary(locale)
   const [result, relock] = await Promise.all([
     resolveShareToken(token),
     resolveRelockState(token),
@@ -29,25 +33,31 @@ export default async function GuestSharePage({
             <KeyRound aria-hidden="true" className="size-5" />
           </span>
           <div>
-            <p className="text-sm font-semibold">Smart Locker</p>
-            <p className="text-xs text-muted-foreground">Guest access</p>
+            <p className="text-sm font-semibold">{dictionary.common.appName}</p>
+            <p className="text-xs text-muted-foreground">{dictionary.share.guestAccess}</p>
           </div>
         </div>
 
         {result.ok ? (
           <>
             <div className="mb-6">
-              <p className="text-sm font-medium text-muted-foreground">You have access to</p>
+              <p className="text-sm font-medium text-muted-foreground">{dictionary.share.youHaveAccess}</p>
               <h1 className="mt-1 text-3xl font-semibold tracking-tight">{result.grant.locker.name}</h1>
               {result.grant.guestLabel && (
-                <p className="mt-2 text-sm text-muted-foreground">Shared with {result.grant.guestLabel}</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {fill(dictionary.share.sharedWith, { guest: result.grant.guestLabel })}
+                </p>
               )}
             </div>
 
             <div className="mb-6 flex items-start gap-3 rounded-lg bg-muted/70 p-4">
               <Clock3 aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
               <p className="text-sm text-foreground">
-                This link is available until <time dateTime={result.grant.expiresAt.toISOString()}>{formatShareExpiry(result.grant.expiresAt)}</time>.
+                {dictionary.share.availableUntilBefore}
+                <time dateTime={result.grant.expiresAt.toISOString()}>
+                  {formatShareExpiry(result.grant.expiresAt, locale)}
+                </time>
+                {dictionary.share.availableUntilAfter}
               </p>
             </div>
 
@@ -55,15 +65,15 @@ export default async function GuestSharePage({
               token={token}
               initialRelockAt={pendingRelockAt}
             />
-            <p className="mt-6 text-center text-xs text-muted-foreground">No account or app needed. Keep this link private.</p>
+            <p className="mt-6 text-center text-xs text-muted-foreground">{dictionary.share.noAppNeeded}</p>
           </>
         ) : (
           <div className="py-4 text-center">
             <span className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
               <PackageCheck aria-hidden="true" className="size-5 text-muted-foreground" />
             </span>
-            <h1 className="text-2xl font-semibold tracking-tight">This link is no longer available</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Ask the person who shared it with you for a new link.</p>
+            <h1 className="text-2xl font-semibold tracking-tight">{dictionary.share.unavailableTitle}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">{dictionary.share.unavailableBody}</p>
             {pendingRelockAt && (
               <div className="mt-6 text-left">
                 <GuestUnlock token={token} initialRelockAt={pendingRelockAt} relockOnly />

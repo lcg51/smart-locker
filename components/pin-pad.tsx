@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { useI18n } from "@/components/i18n-provider"
 import { X } from "lucide-react"
 
 interface PinPadProps {
@@ -11,6 +12,7 @@ interface PinPadProps {
 }
 
 export function PinPad({ onComplete, maxLength = 4, disabled = false }: PinPadProps) {
+  const { dictionary } = useI18n()
   const [pin, setPin] = useState("")
 
   const handleNumberClick = (num: string) => {
@@ -59,7 +61,7 @@ export function PinPad({ onComplete, maxLength = 4, disabled = false }: PinPadPr
           </Button>
         ))}
         <div className="col-start-3">
-          <Button aria-label="Delete last digit" variant="ghost" size="lg" onClick={handleDelete} className="h-16 w-16" disabled={disabled || pin.length === 0}>
+          <Button aria-label={dictionary.appLock.deleteDigit} variant="ghost" size="lg" onClick={handleDelete} className="h-16 w-16" disabled={disabled || pin.length === 0}>
             <X className="h-6 w-6" />
           </Button>
         </div>

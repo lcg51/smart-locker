@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useTransition } from "react"
+import { useI18n } from "@/components/i18n-provider"
 import { Button } from "@/components/ui/button"
 import { PinPad } from "@/components/pin-pad"
 import { toast } from "@/hooks/use-toast"
@@ -16,6 +17,7 @@ import {
 type SetupStep = "idle" | "enter" | "confirm"
 
 export function PinSettings() {
+  const { dictionary } = useI18n()
   const [hasPin, setHasPin] = useState(false)
   const [isReady, setIsReady] = useState(false)
   const [step, setStep] = useState<SetupStep>("idle")
@@ -29,11 +31,11 @@ export function PinSettings() {
       setHasPin(window.localStorage.getItem(PIN_STORAGE_KEY) !== null)
       /* eslint-enable react-hooks/set-state-in-effect */
     } catch {
-      setError("Device storage is unavailable, so a PIN cannot be saved here.")
+      setError(dictionary.settings.pinStorageUnavailable)
     } finally {
       setIsReady(true)
     }
-  }, [])
+  }, [dictionary.settings.pinStorageUnavailable])
 
   function beginSetup() {
     setStep("enter")
@@ -59,7 +61,7 @@ export function PinSettings() {
     if (firstPin !== pin) {
       setFirstPin(null)
       setStep("enter")
-      setError("Those PINs didn’t match. Start again.")
+      setError(dictionary.settings.pinMismatch)
       return
     }
 
@@ -71,17 +73,17 @@ export function PinSettings() {
         setHasPin(true)
         setStep("idle")
         setFirstPin(null)
-        toast({ title: "PIN set for this device." })
+        toast({ title: dictionary.settings.pinSetToast })
         try {
           window.sessionStorage.setItem(PIN_UNLOCKED_STORAGE_KEY, "1")
         } catch {
           toast({
-            title: "PIN saved.",
-            description: "You’ll need to enter it again after refreshing this tab.",
+            title: dictionary.settings.pinSavedToast,
+            description: dictionary.settings.pinSavedDescription,
           })
         }
       } catch {
-        setError("PIN couldn’t be saved. Check device storage and try again.")
+        setError(dictionary.settings.pinSaveFailed)
       }
     })
   }
@@ -89,49 +91,47 @@ export function PinSettings() {
   function removePin() {
     const cleared = clearPinState()
     if (!cleared.pinRemoved) {
-      setError("Couldn’t remove the PIN from this browser. Check device storage and try again.")
+      setError(dictionary.settings.pinRemoveFailed)
       return
     }
     setHasPin(false)
     setStep("idle")
     setFirstPin(null)
     setError(null)
-    toast({ title: "Device PIN removed." })
+    toast({ title: dictionary.settings.pinRemoved })
   }
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Optional convenience lock for this browser only. It is not account security; email sign-in still protects your account.
-      </p>
+      <p className="text-sm text-muted-foreground">{dictionary.settings.pinIntro}</p>
 
       {isReady && step === "idle" ? (
         <div className="flex flex-col gap-3 sm:flex-row">
           <Button className="min-h-11" disabled={isPending} onClick={beginSetup} type="button" variant={hasPin ? "outline" : "default"}>
-            {hasPin ? "Change device PIN" : "Set a device PIN"}
+            {hasPin ? dictionary.settings.pinChange : dictionary.settings.pinSet}
           </Button>
           {hasPin && (
             <Button className="min-h-11" disabled={isPending} onClick={removePin} type="button" variant="ghost">
-              Remove PIN
+              {dictionary.settings.pinRemove}
             </Button>
           )}
         </div>
       ) : null}
 
-      {!isReady && <p aria-live="polite" className="text-sm text-muted-foreground" role="status">Checking device storage…</p>}
+      {!isReady && <p aria-live="polite" className="text-sm text-muted-foreground" role="status">{dictionary.settings.pinCheckingStorage}</p>}
 
       {step !== "idle" && (
         <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
           <p className="text-sm font-medium" aria-live="polite" role="status">
-            {step === "enter" ? "Enter a new 4-digit PIN" : "Enter the same PIN again"}
+            {step === "enter" ? dictionary.settings.pinEnter : dictionary.settings.pinConfirm}
           </p>
           {isPending ? (
-            <p aria-live="polite" className="text-sm text-muted-foreground" role="status">Saving PIN…</p>
+            <p aria-live="polite" className="text-sm text-muted-foreground" role="status">{dictionary.settings.pinSaving}</p>
           ) : (
             <PinPad onComplete={handlePinComplete} />
           )}
           <Button className="min-h-11" disabled={isPending} onClick={cancelSetup} type="button" variant="outline">
-            Cancel
+            {dictionary.common.cancel}
           </Button>
         </div>
       )}

@@ -1,29 +1,28 @@
 import { describe, expect, it } from "vitest"
-import {
-  authNotice,
-  SIGN_IN_LINK_ERROR,
-  SIGN_IN_UNAVAILABLE_ERROR,
-} from "@/lib/auth/sign-in-notice"
+import { authNoticeKey } from "@/lib/auth/sign-in-notice"
+import { en } from "@/lib/i18n/dictionaries/en"
+import { es } from "@/lib/i18n/dictionaries/es"
 
-describe("authNotice", () => {
+describe("authNoticeKey", () => {
   it("shows nothing when there is no error", () => {
-    expect(authNotice(undefined)).toBeNull()
-    expect(authNotice(null)).toBeNull()
-    expect(authNotice("")).toBeNull()
+    expect(authNoticeKey(undefined)).toBeNull()
+    expect(authNoticeKey(null)).toBeNull()
+    expect(authNoticeKey("")).toBeNull()
   })
 
   it.each(["not_invited", "AccessDenied", "Verification", "Configuration"])(
-    "uses the neutral link message for %s",
+    "uses the link notice for %s",
     (code) => {
-      expect(authNotice(code)).toBe(SIGN_IN_LINK_ERROR)
+      expect(authNoticeKey(code)).toBe("link")
     },
   )
 
-  it("falls back to the generic message for unknown codes", () => {
-    expect(authNotice("OAuthAccountNotLinked")).toBe(SIGN_IN_UNAVAILABLE_ERROR)
+  it("falls back to the generic notice for unknown codes", () => {
+    expect(authNoticeKey("OAuthAccountNotLinked")).toBe("unavailable")
   })
 
-  it("does not name an invite list in the link message", () => {
-    expect(SIGN_IN_LINK_ERROR).not.toMatch(/not invited|not on the list/i)
+  it("does not name an invite list in either language", () => {
+    expect(en.auth.notice.link).not.toMatch(/not invited|not on the list/i)
+    expect(es.auth.notice.link).not.toMatch(/no invitad|no está en la lista/i)
   })
 })

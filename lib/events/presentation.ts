@@ -1,3 +1,6 @@
+import type { Locale } from "@/lib/i18n/config"
+import { getDictionary } from "@/lib/i18n/dictionaries"
+
 type EventInput = {
   actorType: "OWNER" | "GUEST" | "SYSTEM"
   grant: { guestLabel: string | null } | null
@@ -13,16 +16,7 @@ type EventDescription = {
   detail: string | null
 }
 
-const errorDetails: Record<string, string> = {
-  provider_error: "The lock provider did not respond.",
-  unknown_lock: "The locker is not registered with the provider.",
-  not_found: "The locker is no longer available.",
-  rate_limited: "Too many attempts. Try again shortly.",
-  commands_disabled: "Unlocking is paused.",
-  mock_failure: "The provider rejected the command.",
-}
-
-export function formatEventTime(date: Date, locale: "en" | "es" = "en"): string {
+export function formatEventTime(date: Date, locale: Locale = "en"): string {
   return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-GB", {
     year: "numeric",
     month: "short",
@@ -35,19 +29,41 @@ export function formatEventTime(date: Date, locale: "en" | "es" = "en"): string 
   }).format(date)
 }
 
-export function describeEvent(event: EventInput): EventDescription {
+function describeError(errorCode: string, locale: Locale): string {
+  const dictionary = getDictionary(locale)
+
+  switch (errorCode) {
+    case "provider_error":
+      return dictionary.activity.errorProvider
+    case "unknown_lock":
+      return dictionary.activity.errorUnknownLock
+    case "not_found":
+      return dictionary.activity.errorNotFound
+    case "rate_limited":
+      return dictionary.activity.errorRateLimited
+    case "commands_disabled":
+      return dictionary.activity.errorCommandsDisabled
+    case "mock_failure":
+      return dictionary.activity.errorMockFailure
+    default:
+      return dictionary.activity.errorFallback
+  }
+}
+
+export function describeEvent(event: EventInput, locale: Locale = "en"): EventDescription {
+  const dictionary = getDictionary(locale)
   const actor = event.actorType === "OWNER"
-    ? "Resident"
+    ? dictionary.activity.actorResident
     : event.actorType === "GUEST"
-      ? event.grant?.guestLabel?.trim() || "Guest"
-      : "System"
+      ? event.grant?.guestLabel?.trim() || dictionary.common.guest
+      : dictionary.activity.actorSystem
 
   return {
     actor,
-    action: event.action === "UNLOCK" ? "Unlock" : "Lock",
-    result: event.success ? "Succeeded" : "Failed",
-    detail: event.success
-      ? null
-      : errorDetails[event.errorCode ?? ""] ?? "The locker did not respond.",
+    action: event.action === "UNLOCK"
+      ? dictionary.activity.actionUnlock
+      : dictionary.activity.actionLock,
+    result: event.success ? dictionary.activity.succeeded : dictionary.activity.failed,
+    detail: event.success ? null : describeError(event.errorCode ?? "", locale),
   }
 }

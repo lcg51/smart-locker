@@ -2,6 +2,7 @@
 
 import { useTransition, type ReactNode } from "react"
 import { logout } from "@/app/actions/auth"
+import { useI18n } from "@/components/i18n-provider"
 import { Button } from "@/components/ui/button"
 import { clearPinState } from "@/lib/pin"
 
@@ -20,6 +21,7 @@ export function SignOutButton({
   size = "default",
   variant = "ghost",
 }: SignOutButtonProps) {
+  const { dictionary } = useI18n()
   const [isPending, startTransition] = useTransition()
 
   function handleSignOut() {
@@ -31,7 +33,7 @@ export function SignOutButton({
 
   return (
     <Button
-      aria-label={isPending ? "Signing out" : ariaLabel}
+      aria-label={isPending ? dictionary.common.signingOut : ariaLabel}
       className={className}
       disabled={isPending}
       onClick={handleSignOut}

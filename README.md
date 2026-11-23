@@ -19,6 +19,7 @@ The MVP runs on a mock lock provider so the product flow can be built and tested
 - Public privacy notice at `/privacy` and scheduled data retention.
 - Installable PWA with an offline fallback; unlocking still requires a connection.
 - Light, dark, or system appearance, defaulting to the device preference and chosen in Settings.
+- English and Spanish UI. Residents choose the language in Settings → Language; guests follow their browser's `Accept-Language` and have no language picker. Guest-unlock email uses the owner's chosen language.
 - Optional local device PIN as a convenience lock; it is not authentication.
 - End-to-end share-flow coverage with Playwright.
 - Security and accessibility E2E coverage: bearer-link failure modes, cross-resident access, guest-page disclosure and headers, axe checks on key pages, and keyboard and focus behavior.
@@ -286,4 +287,4 @@ page calls the relock action at the deadline. Closed tabs need
 
 ## Pilot scope
 
-This is the first phase of the MVP: English UI copy, Spain pilot, mock lock provider, and no native app. Spanish copy, real TTLock integration, push notifications, and building-wide management are follow-up work.
+This is the first phase of the MVP: Spain pilot, English and Spanish UI, mock lock provider, and no native app. Real TTLock integration, push notifications, and building-wide management are follow-up work.

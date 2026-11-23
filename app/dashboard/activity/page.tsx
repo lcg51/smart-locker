@@ -4,9 +4,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { requireUser } from "@/lib/auth/session"
+import { describeEvent, formatEventTime } from "@/lib/events/presentation"
+import { getDictionary, getLocale } from "@/lib/i18n/server"
 import { getLockersForUser } from "@/lib/lockers/queries"
 import { listLockEvents } from "@/lib/events/queries"
-import { describeEvent, formatEventTime } from "@/lib/events/presentation"
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>
 
@@ -22,6 +23,8 @@ export default async function ActivityPage({
   searchParams: SearchParams
 }) {
   const user = await requireUser()
+  const locale = await getLocale()
+  const dictionary = getDictionary(locale)
   const [params, userLockers] = await Promise.all([searchParams, getLockersForUser(user.id)])
   const requestedLockerId = typeof params.lockerId === "string" ? params.lockerId : undefined
   const lockerId = userLockers.find((locker) => locker.id === requestedLockerId)?.id
@@ -32,63 +35,63 @@ export default async function ActivityPage({
   return (
     <main className="container mx-auto max-w-5xl px-4 py-8 sm:py-10">
       <header className="mb-7">
-        <p className="text-sm font-medium text-muted-foreground">Apartment access</p>
+        <p className="text-sm font-medium text-muted-foreground">{dictionary.activity.eyebrow}</p>
         <h1 className="mt-1 flex items-center gap-2 text-3xl font-semibold tracking-tight">
           <Activity aria-hidden="true" className="size-7" />
-          Activity
+          {dictionary.activity.title}
         </h1>
-        <p className="mt-2 text-muted-foreground">A record of locker access in your apartment.</p>
+        <p className="mt-2 text-muted-foreground">{dictionary.activity.intro}</p>
       </header>
 
       <form action="/dashboard/activity" className="mb-5 flex flex-col gap-3 rounded-xl border bg-card p-4 sm:flex-row sm:items-end" method="get">
         <div className="min-w-0 flex-1 space-y-2">
-          <label className="text-sm font-medium" htmlFor="locker-filter">Locker</label>
+          <label className="text-sm font-medium" htmlFor="locker-filter">{dictionary.activity.filterLabel}</label>
           <select
             className="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
             defaultValue={lockerId ?? ""}
             id="locker-filter"
             name="lockerId"
           >
-            <option value="">All lockers</option>
+            <option value="">{dictionary.activity.allLockers}</option>
             {lockers.map((locker) => <option key={locker.id} value={locker.id}>{locker.name}</option>)}
           </select>
         </div>
         <Button className="min-h-11 sm:min-w-28" type="submit">
           <ListFilter aria-hidden="true" className="size-4" />
-          Filter
+          {dictionary.activity.filter}
         </Button>
       </form>
 
       {events.length === 0 ? (
         <section aria-labelledby="empty-activity-title" className="rounded-xl border border-dashed bg-card px-6 py-12 text-center">
           <Activity aria-hidden="true" className="mx-auto size-8 text-muted-foreground" />
-          <h2 className="mt-4 text-lg font-semibold" id="empty-activity-title">No activity yet.</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Locker access events will appear here.</p>
+          <h2 className="mt-4 text-lg font-semibold" id="empty-activity-title">{dictionary.activity.emptyTitle}</h2>
+          <p className="mt-2 text-sm text-muted-foreground">{dictionary.activity.emptyBody}</p>
         </section>
       ) : (
         <>
           <div className="rounded-xl border bg-card">
             <Table>
-              <TableCaption className="sr-only">Recent locker access events</TableCaption>
+              <TableCaption className="sr-only">{dictionary.activity.tableCaption}</TableCaption>
               <TableHeader>
                 <TableRow>
-                  <TableHead scope="col">Time</TableHead>
-                  <TableHead scope="col">Locker</TableHead>
-                  <TableHead scope="col">Actor</TableHead>
-                  <TableHead scope="col">Action</TableHead>
-                  <TableHead scope="col">Result</TableHead>
+                  <TableHead scope="col">{dictionary.activity.time}</TableHead>
+                  <TableHead scope="col">{dictionary.activity.locker}</TableHead>
+                  <TableHead scope="col">{dictionary.activity.actor}</TableHead>
+                  <TableHead scope="col">{dictionary.activity.action}</TableHead>
+                  <TableHead scope="col">{dictionary.activity.result}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {events.map((event) => {
-                  const description = describeEvent(event)
+                  const description = describeEvent(event, locale)
                   return (
                     <TableRow key={event.id}>
                       <TableCell>
-                        <time dateTime={event.createdAt.toISOString()}>{formatEventTime(event.createdAt)}</time>
+                        <time dateTime={event.createdAt.toISOString()}>{formatEventTime(event.createdAt, locale)}</time>
                       </TableCell>
                       <TableCell className="font-medium">
-                        {lockers.find((locker) => locker.id === event.lockerId)?.name ?? "Locker"}
+                        {lockers.find((locker) => locker.id === event.lockerId)?.name ?? dictionary.activity.lockerFallback}
                       </TableCell>
                       <TableCell>{description.actor}</TableCell>
                       <TableCell>{description.action}</TableCell>
@@ -112,7 +115,7 @@ export default async function ActivityPage({
               <Button asChild className="min-h-11" variant="outline">
                 <Link href={buildActivityUrl({ cursor: nextCursor, lockerId })}>
                   <ArrowDown aria-hidden="true" className="size-4" />
-                  Load more activity
+                  {dictionary.activity.loadMore}
                 </Link>
               </Button>
             </div>

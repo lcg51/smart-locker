@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import type { Locker as LockerRecord } from "@prisma/client"
 import { lockLocker, unlockLocker } from "@/app/actions/lockers"
+import { useI18n } from "@/components/i18n-provider"
+import type { ClientDictionary } from "@/lib/i18n/dictionaries"
 import type { LockStatusValue, LockerState } from "@/lib/locks/types"
 
 export type DisplayState = Omit<LockerState, "online"> & {
@@ -13,27 +15,28 @@ export type DisplayState = Omit<LockerState, "online"> & {
 
 export type Command = "lock" | "unlock"
 
-export const statusLabels: Record<DisplayState["status"], string> = {
-  locked: "Locked",
-  unlocked: "Unlocked",
-  unknown: "Status unknown",
-}
-
 export function displayStatus(status: LockerRecord["status"] | LockStatusValue): DisplayState["status"] {
   if (status === "LOCKED" || status === "locked") return "locked"
   if (status === "UNLOCKED" || status === "unlocked") return "unlocked"
   return "unknown"
 }
 
-export function lockerCommandErrorMessage(errorCode: string | undefined, command: Command): string {
-  if (errorCode === "not_found") return "This locker is no longer available."
-  if (errorCode === "rate_limited") return "Too many attempts. Wait a minute and try again."
-  if (errorCode === "commands_disabled") return "Unlock is paused. You can still lock the locker."
-  return `Couldn't ${command} this locker. Check its connection and try again.`
+export function lockerCommandErrorMessage(
+  errorCode: string | undefined,
+  command: Command,
+  dictionary: ClientDictionary,
+): string {
+  if (errorCode === "not_found") return dictionary.common.commandErrors.notFound
+  if (errorCode === "rate_limited") return dictionary.common.commandErrors.rateLimited
+  if (errorCode === "commands_disabled") return dictionary.common.commandErrors.commandsDisabled
+  return command === "unlock"
+    ? dictionary.common.commandErrors.unlockFailed
+    : dictionary.common.commandErrors.lockFailed
 }
 
 export function useLockerCommand(locker: LockerRecord) {
   const router = useRouter()
+  const { dictionary } = useI18n()
   const [state, setState] = useState<DisplayState>({
     status: displayStatus(locker.status),
     batteryLevel: locker.batteryLevel,
@@ -91,7 +94,7 @@ export function useLockerCommand(locker: LockerRecord) {
         : await lockLocker(locker.id)
 
       if (!result.ok) {
-        setActionError(lockerCommandErrorMessage(result.errorCode, command))
+        setActionError(lockerCommandErrorMessage(result.errorCode, command, dictionary))
         return
       }
 
@@ -102,7 +105,10 @@ export function useLockerCommand(locker: LockerRecord) {
   }
 
   const nextCommand: Command = state.status === "unlocked" ? "lock" : "unlock"
-  const nextLabel = nextCommand === "unlock" ? "Unlock" : "Lock"
+  const nextLabel = nextCommand === "unlock" ? dictionary.common.unlock : dictionary.common.lock
+  const nextPendingLabel = nextCommand === "unlock"
+    ? dictionary.common.unlocking
+    : dictionary.common.locking
 
   return {
     state,
@@ -112,6 +118,7 @@ export function useLockerCommand(locker: LockerRecord) {
     retryCommand,
     nextCommand,
     nextLabel,
+    nextPendingLabel,
     runCommand,
     refreshState,
   }

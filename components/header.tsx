@@ -2,8 +2,11 @@ import { Activity, LockKeyhole, LogOut, Settings } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { SignOutButton } from "@/components/sign-out-button"
+import { getDictionary, getLocale } from "@/lib/i18n/server"
 
-export function Header() {
+export async function Header() {
+  const dictionary = getDictionary(await getLocale())
+
   return (
     <header className="border-b bg-card">
       <div className="container mx-auto flex min-h-16 items-center justify-between gap-4 px-4 py-3">
@@ -12,23 +15,23 @@ export function Header() {
             <LockKeyhole className="size-5" />
           </span>
           <span>
-            <span className="block text-base font-semibold leading-tight">Smart Locker</span>
-            <span className="block text-xs text-muted-foreground">Apartment access</span>
+            <span className="block text-base font-semibold leading-tight">{dictionary.common.appName}</span>
+            <span className="block text-xs text-muted-foreground">{dictionary.common.apartmentAccess}</span>
           </span>
         </Link>
 
-        <nav aria-label="Account" className="flex items-center gap-1">
-          <Button aria-label="Activity" className="size-11" variant="ghost" size="icon" asChild>
+        <nav aria-label={dictionary.common.account} className="flex items-center gap-1">
+          <Button aria-label={dictionary.common.activity} className="size-11" variant="ghost" size="icon" asChild>
             <Link href="/dashboard/activity">
               <Activity aria-hidden="true" className="size-5" />
             </Link>
           </Button>
-          <Button aria-label="Settings" className="size-11" variant="ghost" size="icon" asChild>
+          <Button aria-label={dictionary.common.settings} className="size-11" variant="ghost" size="icon" asChild>
             <Link href="/dashboard/settings">
               <Settings aria-hidden="true" className="size-5" />
             </Link>
           </Button>
-          <SignOutButton ariaLabel="Sign out" className="size-11" size="icon">
+          <SignOutButton ariaLabel={dictionary.common.signOut} className="size-11" size="icon">
             <LogOut aria-hidden="true" className="size-5" />
           </SignOutButton>
         </nav>
