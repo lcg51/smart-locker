@@ -10,6 +10,7 @@ import { SessionList } from "@/components/session-list"
 import { SignOutButton } from "@/components/sign-out-button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { getCurrentSessionToken, listActiveSessions, requireUser } from "@/lib/auth/session"
+import { formatDeviceLabel } from "@/lib/auth/session-presentation"
 import { prisma } from "@/lib/db"
 import type { Locale } from "@/lib/i18n/config"
 import { getDictionary, getLocale } from "@/lib/i18n/server"
@@ -37,7 +38,7 @@ export default async function SettingsPage() {
     createdAt: formatSessionDate(session.createdAt, locale),
     expires: formatSessionDate(session.expires, locale),
     isCurrent: session.isCurrent,
-    deviceLabel: session.deviceLabel,
+    deviceLabel: formatDeviceLabel(session.deviceLabel, locale),
     locationLabel: session.locationLabel,
   }))
 

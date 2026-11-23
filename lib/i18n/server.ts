@@ -1,7 +1,7 @@
 import { cookies, headers } from "next/headers"
 import { defaultLocale, isLocale, localeCookie, type Locale } from "@/lib/i18n/config"
 
-export { getDictionary } from "@/lib/i18n/dictionaries"
+export { getClientDictionary, getDictionary } from "@/lib/i18n/dictionaries"
 
 export async function getLocale(): Promise<Locale> {
   const cookieStore = await cookies()

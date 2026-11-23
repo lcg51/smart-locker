@@ -7,7 +7,7 @@ import { SafeAnalytics } from "@/components/safe-analytics"
 import { ServiceWorker } from "@/components/service-worker"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
-import { getDictionary, getLocale } from "@/lib/i18n/server"
+import { getClientDictionary, getDictionary, getLocale } from "@/lib/i18n/server"
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -51,7 +51,7 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const locale = await getLocale()
-  const dictionary = getDictionary(locale)
+  const clientDictionary = getClientDictionary(locale)
 
   return (
     <html
@@ -61,7 +61,7 @@ export default async function RootLayout({
     >
       <body className={`font-sans antialiased`}>
         <ThemeProvider>
-          <I18nProvider dictionary={dictionary} locale={locale}>
+          <I18nProvider dictionary={clientDictionary} locale={locale}>
             {children}
             <Toaster />
             <SafeAnalytics />

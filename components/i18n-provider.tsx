@@ -2,11 +2,11 @@
 
 import { createContext, useContext, type ReactNode } from "react"
 import type { Locale } from "@/lib/i18n/config"
-import type { Dictionary } from "@/lib/i18n/dictionaries/en"
+import type { ClientDictionary } from "@/lib/i18n/dictionaries"
 
 type I18nValue = {
   locale: Locale
-  dictionary: Dictionary
+  dictionary: ClientDictionary
 }
 
 const I18nContext = createContext<I18nValue | null>(null)

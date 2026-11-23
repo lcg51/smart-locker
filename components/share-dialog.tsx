@@ -12,14 +12,14 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, Di
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { fill } from "@/lib/i18n/format"
-import type { Dictionary } from "@/lib/i18n/dictionaries"
+import type { ClientDictionary } from "@/lib/i18n/dictionaries"
 
 type CreatedShare = { url: string; grantId: string }
 type CopyStatus = "copied" | "error" | null
 
 function shareErrorMessage(
   error: Extract<CreateShareResult, { ok: false }>["error"],
-  dictionary: Dictionary,
+  dictionary: ClientDictionary,
 ): string {
   if (error === "rate_limited") return dictionary.share.rateLimited
   if (error === "share_limit_reached") return dictionary.share.shareLimit

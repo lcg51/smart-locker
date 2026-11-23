@@ -6,7 +6,7 @@ import { redeemShare, relockShare } from "@/app/share/[token]/actions"
 import type { GuestRedeemResult } from "@/app/share/[token]/actions"
 import { useI18n } from "@/components/i18n-provider"
 import { Button } from "@/components/ui/button"
-import type { Dictionary } from "@/lib/i18n/dictionaries"
+import type { ClientDictionary } from "@/lib/i18n/dictionaries"
 import { isGuestUnlockDisabled } from "@/lib/shares/guest-ui-state"
 import {
   createGuestUnlockState,
@@ -34,7 +34,7 @@ function secondsUntil(deadline: number): number {
 
 function getErrorMessage(
   result: Extract<GuestRedeemResult, { ok: false }>,
-  dictionary: Dictionary,
+  dictionary: ClientDictionary,
 ): string {
   if (result.reason === "rate_limited") return dictionary.share.errorRateLimited
   if (result.reason === "lock_failed") return dictionary.share.errorLockFailed

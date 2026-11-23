@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import type { Locker as LockerRecord } from "@prisma/client"
 import { lockLocker, unlockLocker } from "@/app/actions/lockers"
 import { useI18n } from "@/components/i18n-provider"
-import type { Dictionary } from "@/lib/i18n/dictionaries/en"
+import type { ClientDictionary } from "@/lib/i18n/dictionaries"
 import type { LockStatusValue, LockerState } from "@/lib/locks/types"
 
 export type DisplayState = Omit<LockerState, "online"> & {
@@ -24,7 +24,7 @@ export function displayStatus(status: LockerRecord["status"] | LockStatusValue):
 export function lockerCommandErrorMessage(
   errorCode: string | undefined,
   command: Command,
-  dictionary: Dictionary,
+  dictionary: ClientDictionary,
 ): string {
   if (errorCode === "not_found") return dictionary.common.commandErrors.notFound
   if (errorCode === "rate_limited") return dictionary.common.commandErrors.rateLimited

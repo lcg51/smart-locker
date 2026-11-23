@@ -20,12 +20,12 @@ import { Label } from "@/components/ui/label"
 import { toast } from "@/hooks/use-toast"
 import { formatEventTime } from "@/lib/events/presentation"
 import { fill } from "@/lib/i18n/format"
-import type { Dictionary } from "@/lib/i18n/dictionaries"
+import type { ClientDictionary } from "@/lib/i18n/dictionaries"
 import type { ActiveShareGrant } from "@/lib/shares/service"
 
 function errorMessage(
   error: Extract<ExtendShareResult, { ok: false }>["error"],
-  dictionary: Dictionary,
+  dictionary: ClientDictionary,
 ): string {
   if (error === "not_found") return dictionary.share.extendNotFound
   if (error === "revoked") return dictionary.share.extendRevoked

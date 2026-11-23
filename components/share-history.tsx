@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { formatEventTime } from "@/lib/events/presentation"
 import { getDictionary, getLocale } from "@/lib/i18n/server"
+import { formatShareDetail } from "@/lib/shares/presentation"
 import type { ShareHistoryEvent } from "@/lib/shares/service"
 
 export async function ShareHistory({ events }: { events: ShareHistoryEvent[] }) {
@@ -50,7 +51,9 @@ export async function ShareHistory({ events }: { events: ShareHistoryEvent[] }) 
                       {actionLabels[event.action]}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{event.detail ?? "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {event.detail ? formatShareDetail(event.detail, dictionary) : "—"}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
