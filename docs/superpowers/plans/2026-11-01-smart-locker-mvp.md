@@ -61,7 +61,7 @@ Work the tasks in order. Each file is self-contained: it lists its own files, in
 | 14 | [Light, dark, and system appearance](2026-11-01-smart-locker-mvp/task-14-dark-mode.md) | Phase 1.5 | Task 13 |
 | 15 | [TTLock provider and credential encryption (Phase 2)](2026-11-01-smart-locker-mvp/task-15-ttlock-provider.md) | Phase 2 | Task 01, Task 02, Task 03 |
 
-### Pilot hardening and growth backlog (Tasks 16–34)
+### Pilot hardening and growth backlog (Tasks 16–38)
 
 The [pilot hardening and growth design](../specs/2026-11-03-smart-locker-pilot-hardening-design.md)
 is the spec of record for these tasks. Tasks 16–21 are the pilot-critical set;
@@ -89,6 +89,10 @@ provider task and does not move earlier.
 | 32 | [TTLock API quota reduction and guard](2026-11-01-smart-locker-mvp/task-32-ttlock-api-quota.md) | Phase 2.5 | Task 15, Task 16 |
 | 33 | [Evaluate local Bluetooth control](2026-11-01-smart-locker-mvp/task-33-local-bluetooth-evaluation.md) | Phase 3 (evaluation) | Task 32 |
 | 34 | [Evaluate TTLock on-premise](2026-11-01-smart-locker-mvp/task-34-on-premise-evaluation.md) | Phase 3 (evaluation) | Task 32 |
+| 35 | [Spanish UI finishing pass](2026-11-01-smart-locker-mvp/task-35-spanish-ui-finishing.md) | Phase 3 | Task 27 |
+| 36 | [Localized sign-in email](2026-11-01-smart-locker-mvp/task-36-localized-sign-in-email.md) | Phase 3 | Task 04, Task 27 |
+| 37 | [Empty-state guidance for residents without lockers](2026-11-01-smart-locker-mvp/task-37-empty-lockers-guidance.md) | Phase 2 | Task 05, Task 10, Task 27 |
+| 38 | [Relock scheduler runbook and verification](2026-11-01-smart-locker-mvp/task-38-relock-scheduler.md) | Phase 1.5 (ops) | Task 16, Task 21 |
 
 **Task 33 status:** evaluated 2026-11-21. Proposed no-go for the pilot; the free tier is 30,000 calls per month per application, and local Bluetooth drops the guest link, server relock, and history. Decision pending owner sign-off: [ttlock-local-bluetooth.md](../../decisions/ttlock-local-bluetooth.md).
 
@@ -117,6 +121,15 @@ provider task and does not move earlier.
    owner unlock, a guest unlock, or a relock must still work below the hard
    limit, and a blocked call must never silently claim success. Pinned in
    Task 32.
+8. **A missing page or sign-in email falls back to English.** Both must follow
+   the requester's language without revealing invite status. Pinned in Tasks 35
+   and 36.
+9. **A resident with no lockers is stuck.** The dashboard must explain that the
+   building administrator assigns lockers and offer a recheck. Pinned in
+   Task 37.
+10. **A guest closes the tab and the locker never relocks.** On Vercel Hobby the
+    minute fallback needs an external scheduler; the measured relock latency
+    must be recorded. Pinned in Task 38.
 
 ## Dependency order
 
@@ -141,9 +154,13 @@ Task 12, 14, 16, 17, 22 -> Task 30
 Task 05, 06, 08, 09, 10, 22, 28, 29 -> Task 31
 Task 15, 16 -> Task 32
 Task 32 -> Tasks 33, 34 (evaluations; no code until a go decision)
+Task 27 -> Task 35
+Task 04, 27 -> Task 36
+Task 05, 10, 27 -> Task 37
+Task 16, 21 -> Task 38 (ops; runs in parallel with 35–37)
 ```
 
-Tasks 02, 03, and 10 can run in parallel once Task 01 lands. Tasks 06 and 10 can run in parallel once Task 05 lands. Everything else is sequential because it consumes the previous task's interfaces. Tasks 22–24, 26, and 28–32 can run during the pilot; Task 25 waits for Task 15's real gateway timestamps; Task 27 waits for the English UI to be stable. Tasks 33 and 34 are decision gates and can run in parallel after Task 32.
+Tasks 02, 03, and 10 can run in parallel once Task 01 lands. Tasks 06 and 10 can run in parallel once Task 05 lands. Everything else is sequential because it consumes the previous task's interfaces. Tasks 22–24, 26, 28–32, and 35–37 can run during the pilot; Task 25 waits for Task 15's real gateway timestamps; Task 27 is complete. Tasks 33 and 34 are decision gates and can run in parallel after Task 32. Task 38 is operations and can run alongside the remaining polish.
 
 ## Execution notes
 
@@ -156,4 +173,7 @@ Tasks 02, 03, and 10 can run in parallel once Task 01 lands. Tasks 06 and 10 can
 - Run Task 31 after Task 29 so the share-extension dialog exists; keep validation and failure messages inline.
 - Confirm the TTLock monthly quota on the developer console before Task 32; the guard's thresholds depend on it.
 - Tasks 33 and 34 produce decision documents only. Do not start their code until the owner records a go.
+- Tasks 35–37 are finishing work after Task 27; Task 37 is the support path for an unprovisioned resident.
+- Complete Task 38 before inviting residents: without the external minute scheduler, a guest who closes the tab never relocks on Vercel Hobby.
+- Task 35 must update the existing 404 assertion in the security E2E when it replaces Next's default page.
 - Run each task's final verification command and read its output before claiming the task complete.
