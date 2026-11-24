@@ -21,7 +21,23 @@ test("a resident with no lockers sees the next step and can recheck", async ({ b
   await page.goto("/dashboard")
   await expect(page.getByRole("heading", { name: "No lockers yet" })).toBeVisible()
   await expect(page.getByText("Your building administrator assigns lockers to your apartment.")).toBeVisible()
-  await expect(page.getByRole("button", { name: "Check again" })).toBeVisible()
+
+  const user = await prisma.user.findUniqueOrThrow({ where: { email: EMAIL } })
+  await prisma.locker.create({
+    data: {
+      userId: user.id,
+      name: "Kitchen",
+      vendor: "mock",
+      vendorLockId: `empty-${Date.now()}`,
+      status: "LOCKED",
+      confirmedAt: new Date(),
+    },
+  })
+
+  await page.getByRole("button", { name: "Check again" }).click()
+  await expect(page.getByRole("heading", { name: "No lockers yet" })).toBeHidden()
+  await expect(page.getByRole("heading", { name: "Kitchen" })).toBeVisible()
+  await expect(page).toHaveURL(/\/dashboard$/)
 
   await context.close()
 })
