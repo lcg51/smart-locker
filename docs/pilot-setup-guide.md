@@ -62,6 +62,8 @@ Each locker uses `name:vendor:vendorLockId`. The command:
 
 Verify the allowlist entry and locker rows before inviting the resident. Do not provision a vendor lock ID that belongs to another apartment; the command refuses to move an existing locker to a different resident.
 
+A resident who opens the app before their lockers exist sees **No lockers yet** with the building-administrator instruction. After you provision them, ask the resident to press **Check again**; the dashboard refreshes without a sign-out.
+
 For local or mock testing, use `vendor` `mock` and any stable ID:
 
 ```bash

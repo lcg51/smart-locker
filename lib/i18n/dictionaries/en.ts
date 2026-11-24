@@ -97,8 +97,9 @@ export const en = {
     title: "Your lockers",
     intro: "Check status and control the lockers in your apartment.",
     emptyTitle: "No lockers yet",
-    emptyBody:
-      "Your apartment lockers will appear here once your building administrator has set up your account.",
+    emptyHint: "Your building administrator assigns lockers to your apartment.",
+    emptyReload: "Check again",
+    emptyChecking: "Checking…",
     listLabel: "Your lockers",
     apartmentLocker: "Apartment locker",
     details: "Locker details",
