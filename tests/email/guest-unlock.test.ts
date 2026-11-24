@@ -55,9 +55,7 @@ describe("sendGuestUnlockEmail", () => {
     expect(body.from).toBe("no-reply@example.com")
     expect(body.to).toBe("owner@example.com")
     expect(body.subject).toBe("Kitchen was unlocked")
-    expect(body.text).toContain("Cleaner")
-    expect(body.text).toContain("Kitchen")
-    expect(body.text).toContain("2025")
+    expect(body.text).toBe("Cleaner unlocked Kitchen on 5 Apr 2025, 08:07.")
   })
 
   it("returns false and logs a provider error without exposing email details", async () => {
@@ -103,7 +101,7 @@ describe("sendGuestUnlockEmail", () => {
 
     const body = JSON.parse(String(getRequest().requestInit?.body)) as { subject: string; text: string }
     expect(body.subject).toBe("Kitchen se ha desbloqueado")
-    expect(body.text).toContain("Limpieza desbloqueó Kitchen")
+    expect(body.text).toBe("Limpieza desbloqueó Kitchen el 5 abr 2025, 8:07.")
   })
 })
 

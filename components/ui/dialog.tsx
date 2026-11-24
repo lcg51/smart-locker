@@ -1,7 +1,5 @@
 'use client'
 
-"use client"
-
 import * as React from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { XIcon } from 'lucide-react'
@@ -60,6 +58,8 @@ function DialogContent({
   closeLabel?: string
 }) {
   const { dictionary } = useI18n()
+  // Optional for dialogs that hide the button; when shown, the localized
+  // default keeps the screen-reader label from falling back to English.
 
   return (
     <DialogPortal data-slot="dialog-portal">

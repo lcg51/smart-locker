@@ -36,7 +36,7 @@ test("a one-use link cannot be replayed", async ({ page }) => {
 })
 
 test("a resident cannot open another resident's locker", async ({ browser }) => {
-  const other = await browser.newContext()
+  const other = await browser.newContext({ locale: "en-GB" })
   try {
     await signIn(other, "beto@example.com")
     const page = await other.newPage()
@@ -44,6 +44,8 @@ test("a resident cannot open another resident's locker", async ({ browser }) => 
     const locker = await prisma.locker.findFirstOrThrow({ where: { userId: ana.id } })
 
     await page.goto(`/dashboard/lockers/${locker.id}`)
+    // notFound() streams after the dashboard layout, so the status is 200;
+    // the neutral page, not the status, is the security assertion.
     await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible()
   } finally {
     await other.close()

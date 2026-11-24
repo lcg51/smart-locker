@@ -51,7 +51,9 @@ test("a Spanish browser gets a Spanish not-found page", async ({ browser }) => {
 
   expect(response?.status()).toBe(404)
   await expect(page.getByRole("heading", { name: "Página no encontrada" })).toBeVisible()
-  await expect(page.getByRole("link", { name: "Volver a Smart Locker" })).toBeVisible()
+  const back = page.getByRole("link", { name: "Volver a Smart Locker" })
+  await expect(back).toBeVisible()
+  await expect(back).toHaveAttribute("href", "/")
   await expect(page.locator("html")).toHaveAttribute("lang", "es")
 
   await context.close()

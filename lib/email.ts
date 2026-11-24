@@ -22,8 +22,8 @@ export async function sendGuestUnlockEmail(input: GuestUnlockEmailInput): Promis
     const dictionary = getDictionary(locale)
     const unlockedAt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-GB", {
       dateStyle: "medium",
-      timeStyle: "long",
-      timeZone: "UTC",
+      timeStyle: "short",
+      timeZone: "Europe/Madrid",
     }).format(input.unlockedAt)
     const guest = input.guestLabel?.trim() || dictionary.email.guestFallback
     const response = await resend.emails.send({

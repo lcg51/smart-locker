@@ -111,7 +111,7 @@ export function AppLock({ children }: { children: ReactNode }) {
             <ShieldCheck aria-hidden="true" className="size-4" />
             {dictionary.appLock.protected}
           </p>
-          <SignOutButton ariaLabel={dictionary.appLock.signOutInstead} className="min-h-11 w-full" variant="outline">
+          <SignOutButton ariaLabel={dictionary.appLock.signOutInstead} className="min-h-11 w-full whitespace-normal" variant="outline">
             {dictionary.appLock.signOutInstead}
           </SignOutButton>
         </div>
