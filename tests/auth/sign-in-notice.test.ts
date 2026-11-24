@@ -10,12 +10,18 @@ describe("authNoticeKey", () => {
     expect(authNoticeKey("")).toBeNull()
   })
 
-  it.each(["not_invited", "AccessDenied", "Verification", "Configuration"])(
+  it.each(["not_invited", "AccessDenied", "Verification"])(
     "uses the link notice for %s",
     (code) => {
       expect(authNoticeKey(code)).toBe("link")
     },
   )
+
+  it("uses the send notice when Auth.js reports a provider configuration failure", () => {
+    expect(authNoticeKey("Configuration")).toBe("send")
+    expect(en.auth.notice.send).toBe("We couldn’t send the sign-in link. Try again in a moment.")
+    expect(es.auth.notice.send).toBe("No se pudo enviar el enlace de acceso. Inténtalo de nuevo en un momento.")
+  })
 
   it("falls back to the generic notice for unknown codes", () => {
     expect(authNoticeKey("OAuthAccountNotLinked")).toBe("unavailable")
