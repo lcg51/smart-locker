@@ -2,6 +2,8 @@ import NextAuth from "next-auth"
 import Resend from "next-auth/providers/resend"
 import { adapter } from "@/lib/auth/adapter"
 import { resolveSignIn } from "@/lib/auth/sign-in-callback"
+import { sendMagicLinkEmail } from "@/lib/email/magic-link"
+import type { Locale } from "@/lib/i18n/config"
 import { getLocale } from "@/lib/i18n/server"
 import { getEnv } from "@/lib/env"
 
@@ -10,7 +12,21 @@ const env = getEnv()
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter,
   session: { strategy: "database", maxAge: 30 * 24 * 60 * 60 },
-  providers: [Resend({ from: env.EMAIL_FROM, apiKey: env.RESEND_API_KEY })],
+  providers: [
+    Resend({
+      from: env.EMAIL_FROM,
+      apiKey: env.RESEND_API_KEY,
+      async sendVerificationRequest({ identifier, url }) {
+        let locale: Locale = "en"
+        try {
+          locale = await getLocale()
+        } catch {
+          // A non-request context falls back to English.
+        }
+        await sendMagicLinkEmail({ to: identifier, url, locale })
+      },
+    }),
+  ],
   pages: { signIn: "/auth", verifyRequest: "/auth/check-email", error: "/auth" },
   callbacks: {
     async signIn({ user }) {

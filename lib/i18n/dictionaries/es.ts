@@ -443,5 +443,8 @@ export const es = {
     guestSubject: "{locker} se ha desbloqueado",
     guestBody: "{guest} desbloqueó {locker} el {time}.",
     guestFallback: "Un invitado",
+    signInSubject: "Inicia sesión en Smart Locker",
+    signInBody:
+      "Abre este enlace para iniciar sesión en Smart Locker:\n\n{url}\n\nSi no solicitaste este correo, puedes ignorarlo. El enlace caduca en 24 horas.",
   },
 } satisfies Dictionary
