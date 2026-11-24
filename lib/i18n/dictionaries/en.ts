@@ -435,7 +435,7 @@ export const en = {
   },
   email: {
     guestSubject: "{locker} was unlocked",
-    guestBody: "{guest} unlocked {locker} at {time}.",
+    guestBody: "{guest} unlocked {locker} on {time}.",
     guestFallback: "A guest",
     signInSubject: "Sign in to Smart Locker",
     signInBody:
