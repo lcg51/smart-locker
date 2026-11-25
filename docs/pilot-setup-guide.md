@@ -96,7 +96,7 @@ Ask the resident to:
 - Confirm the page shows only the locker name, guest label, and expiry.
 - With the phone in dark mode, confirm the page is dark and readable and offers no theme control.
 - Tap **Unlock locker** and confirm the 30-second relock countdown appears, then wait for **Locker relocked.** and confirm the owner's locker shows **Locked**.
-- Close the guest tab during the countdown and confirm the cron fallback returns the locker to **Locked** within one scheduler interval after the deadline (one minute on Vercel Pro; the configured external interval otherwise), allowing for provider failures.
+- Close the guest tab during the countdown and confirm the cron fallback returns the locker to **Locked** within two scheduler intervals after the deadline (normally within one; one minute on Vercel Pro), allowing for provider failures.
 - Confirm the owner receives the guest-unlock email if notifications are enabled.
 - In DevTools → Network, confirm the share document sends `Referrer-Policy: no-referrer`, `Cache-Control: no-store`, `X-Robots-Tag: noindex`, `X-Frame-Options: DENY`, and a `Content-Security-Policy` containing `frame-ancestors 'none'`. Confirm the console has no CSP errors. A share token must never be indexed or cached.
 - Confirm the installed service worker never serves `/dashboard` or a `/share/*` page from its cache, and that the installed app shows the `/offline` fallback when disconnected.
