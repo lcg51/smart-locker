@@ -99,8 +99,9 @@ export const es = {
     title: "Tus taquillas",
     intro: "Consulta el estado y controla las taquillas de tu vivienda.",
     emptyTitle: "Aún no hay taquillas",
-    emptyBody:
-      "Las taquillas de tu vivienda aparecerán aquí cuando la administración del edificio configure tu cuenta.",
+    emptyHint: "La administración del edificio asigna las taquillas de tu vivienda.",
+    emptyReload: "Volver a comprobar",
+    emptyChecking: "Comprobando…",
     listLabel: "Tus taquillas",
     apartmentLocker: "Taquilla de la vivienda",
     details: "Detalles de la taquilla",

@@ -242,7 +242,7 @@ page calls the relock action at the deadline. Closed tabs need
 |---|---|
 | `ZodError` for an env key | A required variable is missing, or `APP_URL`/`AUTH_URL` lacks `https://`. Check the `issues` array for the key and redeploy. |
 | `AccessDenied` at sign-in | The address has no `AllowedEmail` row in the database the app uses. Provision it. |
-| Dashboard says "No lockers yet" | The locker is missing or belongs to another user. Check `select id, email from "User"` and the locker's `userId`; reassign it or delete it and re-provision with a unique `vendorLockId`. |
+| Dashboard says "No lockers yet" | The locker is missing or belongs to another user. Check `select id, email from "User"` and the locker's `userId`; reassign it or delete it and re-provision with a unique `vendorLockId`. After provisioning, ask the resident to press **Check again**; new lockers go to onboarding for naming and confirmation, and no sign-out is needed. |
 | Magic link never arrives | `EMAIL_FROM` is not on a verified domain, or you use `onboarding@resend.dev` with a recipient other than the Resend account owner. |
 | Tables missing in the Neon console | You are viewing a different branch or database. Run the information_schema query on the branch in `DATABASE_URL`. |
 
