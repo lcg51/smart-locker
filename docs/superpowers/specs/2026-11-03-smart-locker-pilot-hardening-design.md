@@ -2,7 +2,7 @@
 
 Date: 2026-11-03
 Status: Approved for planning (user, 2026-11-03)
-Spec of record for Tasks 16–38.
+Spec of record for Tasks 16–39.
 
 ## Intent
 
@@ -410,6 +410,23 @@ code. The owner records the decision and the conditions that would reopen it.
 - Acceptance: `401` without the bearer, `200` with it, a closed-tab guest relock
   within two intervals, and the provider and interval recorded.
 
+### 23. Branded magic-link email (Task 39)
+
+- Send both a table-based HTML email and the existing plain-text alternative;
+  Resend receives `html` and `text`.
+- Inline styles are the source of truth: a 600px card, system font stack, a
+  visible primary button, a break-all fallback URL, and a dark-mode media block.
+  No images, tracking pixels, external fonts, external CSS, or scripts.
+- Localize the heading, intro, button, fallback, and ignore copy in English and
+  Spanish. The subject, token, and callback URL stay unchanged.
+- Escape the URL in attributes and visible text; never include the recipient.
+- Acceptance: unit tests cover English/Spanish HTML and text, URL escaping,
+  exactly one URL in the text part, and no external resources; a manual matrix
+  covers Gmail, Apple Mail, and Outlook in light/dark, mobile, images off, and a
+  text-only client.
+- Non-goal: styling the guest-unlock email. Revisit it as a follow-up if the
+  pilot wants consistent branding.
+
 ## Task map
 
 | # | Task | Phase | Depends on | Acceptance in one line |
@@ -437,6 +454,7 @@ code. The owner records the decision and the conditions that would reopen it.
 | 36 | Localized sign-in email | 3 | 04, 27 | The magic-link email arrives in the requester's language with neutral copy. |
 | 37 | Empty-state guidance for residents without lockers | 2 | 05, 10, 27 | A resident with no lockers sees the next step and can recheck. |
 | 38 | Relock scheduler runbook and verification | 1.5 | 16, 21 | A minute scheduler calls the fallback and closed-tab guests relock within two intervals. |
+| 39 | Branded magic-link email | 3 | 27, 36 | The sign-in email is styled, accessible, localized, and safe across major clients. |
 
 ## Sequencing
 
@@ -454,6 +472,8 @@ code. The owner records the decision and the conditions that would reopen it.
   finishing work and must not delay Task 38.
 - Task 38 is pilot-critical operations: complete it before inviting residents.
   It can run in parallel with Tasks 35–37 because it changes no app code.
+- Task 39 follows Task 36 and is email polish; it must not delay the
+  pilot-critical set.
 - Task 27 is complete. Tasks 35–37 finish the remaining localization and
   empty-state work without reopening the pilot-critical set.
 - Task 15 remains blocked on TTLock credentials and a test lock. Do not replace
@@ -470,4 +490,7 @@ code. The owner records the decision and the conditions that would reopen it.
 - Whether owner unlocks should also auto-relock later. This design keeps owner
   unlocks manual so residents can load groceries without a countdown fight.
 - The PWA icon artwork; reuse the existing lock mark with the correct safe area.
+- Whether the sign-in email should include a hosted logo image. The template
+  starts text-only because many clients block images; a logo needs a public
+  asset and alt text.
 - The metrics report cadence and where the weekly output is stored.
