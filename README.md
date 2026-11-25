@@ -125,7 +125,7 @@ If Upstash is not configured, redemption uses an in-memory limiter, which is sui
 
 The ops scripts (`pnpm provision`, `pnpm bulk-revoke`, and `pnpm metrics`) load `.env.local` first and then `.env`; `.env.local` takes precedence. Next.js follows the same local-first convention.
 
-Guest unlocks set a server-side `relockAt` deadline. The guest page counts down to that deadline and calls the relock action when it reaches zero; the page reports the server result and never claims a relock it did not confirm. `/api/cron/relock` is a one-minute fallback for guests who close the tab before the timer fires. It requires `CRON_SECRET` and a scheduler. `vercel.json` schedules only the daily cleanup cron because Vercel Hobby rejects crons that run more than once a day; on Hobby, call `/api/cron/relock` from an external scheduler every minute and document the achieved interval. Add the one-minute cron back to `vercel.json` on Pro.
+Guest unlocks set a server-side `relockAt` deadline. The guest page counts down to that deadline and calls the relock action when it reaches zero; the page reports the server result and never claims a relock it did not confirm. `/api/cron/relock` is a one-minute fallback for guests who close the tab before the timer fires. It requires `CRON_SECRET` and a scheduler. `vercel.json` schedules only the daily cleanup cron because Vercel Hobby rejects crons that run more than once a day; on Hobby, call `/api/cron/relock` from an external scheduler every minute. See the [relock scheduler runbook](docs/relock-scheduler.md) for the recommended QStash setup, the cron-job.org alternative, cost notes, and the closed-tab acceptance check. Add the one-minute cron back to `vercel.json` on Pro.
 
 Retention is enforced by `/api/cron/cleanup` (daily at 03:00 UTC, also protected by `CRON_SECRET`): inactive share links and expired sessions/verification tokens are removed 30 days after they stop being usable, and lock events after 12 months. The public privacy notice is at `/privacy`; set `PRIVACY_CONTACT_EMAIL` to the monitored contact before inviting residents.
 
@@ -224,8 +224,10 @@ Vercel Hobby allows cron jobs only once per day, so `vercel.json` schedules just
 `/api/cron/cleanup`. A guest who keeps the tab open still relocks, because the
 page calls the relock action at the deadline. Closed tabs need
 `/api/cron/relock` called every minute from an external scheduler with
-`Authorization: Bearer <CRON_SECRET>`. Add the one-minute cron back to
-`vercel.json` on Pro.
+`Authorization: Bearer <CRON_SECRET>`. Follow the
+[relock scheduler runbook](docs/relock-scheduler.md) to create the schedule,
+verify the route, and record the measured interval and closed-tab latency. Add
+the one-minute cron back to `vercel.json` on Pro.
 
 ### 6. First-run check
 
@@ -284,6 +286,7 @@ page calls the relock action at the deadline. Closed tabs need
 | `tests/` | Vitest unit and integration tests. |
 | `e2e/` | Playwright share-flow tests and deterministic seed. |
 | `docs/pilot-setup-guide.md` | Operator checklist for the Spain pilot. |
+| `docs/relock-scheduler.md` | External one-minute relock scheduler setup, verification, and acceptance record. |
 
 ## Pilot scope
 
