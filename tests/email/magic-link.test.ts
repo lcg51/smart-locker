@@ -15,13 +15,13 @@ function stubResend(response: { body: unknown; status: number }) {
   return () => request
 }
 
-function parseBody(init?: RequestInit): { from: string; to: string; subject: string; text: string; html?: unknown } {
+function parseBody(init?: RequestInit): { from: string; to: string; subject: string; text: string; html?: string } {
   return JSON.parse(String(init?.body)) as {
     from: string
     to: string
     subject: string
     text: string
-    html?: unknown
+    html?: string
   }
 }
 
@@ -49,7 +49,9 @@ describe("sendMagicLinkEmail", () => {
     expect(body.subject).toBe("Sign in to Smart Locker")
     expect(body.text).toContain(URL)
     expect((body.text.match(/token=abc/g) ?? []).length).toBe(1)
-    expect(body.html).toBeUndefined()
+    expect(body.html).toContain("<!doctype html>")
+    expect(body.html).toContain('lang="en"')
+    expect(body.html).toContain(URL)
     expect(body.text).not.toMatch(/invited|not invited/i)
   })
 
@@ -66,6 +68,7 @@ describe("sendMagicLinkEmail", () => {
     expect(body.to).toBe("ana@example.com")
     expect(body.subject).toBe("Inicia sesión en Smart Locker")
     expect(body.text).toContain(URL)
+    expect(body.html).toContain('lang="es"')
     expect(body.text).not.toMatch(/invitad|no está en la lista/i)
   })
 
