@@ -2,7 +2,7 @@
 
 Date: 2026-11-03
 Status: Approved for planning (user, 2026-11-03)
-Spec of record for Tasks 16–39.
+Spec of record for Tasks 16–40.
 
 ## Intent
 
@@ -427,6 +427,24 @@ code. The owner records the decision and the conditions that would reopen it.
 - Non-goal: styling the guest-unlock email. Revisit it as a follow-up if the
   pilot wants consistent branding.
 
+### 24. AWS Lambda relock scheduler migration (Task 40)
+
+- QStash remains the live pilot scheduler from Task 38. Task 40 is a post-pilot
+  migration to AWS EventBridge Scheduler → Lambda → `GET /api/cron/relock`.
+- The Lambda runs in an EU region, reads `CRON_SECRET` from SSM SecureString,
+  calls the route with the bearer token, and logs only status and counts.
+- The schedule runs `rate(1 minute)` and has retry, a dead-letter queue, and a
+  CloudWatch error alarm. Least-privilege IAM grants only the parameter read and
+  the function invocation.
+- Deploy with the schedule disabled, invoke the Lambda manually, and enable it
+  only after a `200`. Keep the QStash schedule paused but available for rollback
+  until the closed-tab acceptance passes.
+- No application code, route, token, or database changes. No other AWS migration.
+- Acceptance: a manual invoke returns `200`, the schedule logs one successful
+  call per minute, a closed-tab guest relocks within two intervals with QStash
+  paused, and the deployment record names AWS, the region, and the measured
+  latency.
+
 ## Task map
 
 | # | Task | Phase | Depends on | Acceptance in one line |
@@ -455,6 +473,7 @@ code. The owner records the decision and the conditions that would reopen it.
 | 37 | Empty-state guidance for residents without lockers | 2 | 05, 10, 27 | A resident with no lockers sees the next step and can recheck. |
 | 38 | Relock scheduler runbook and verification | 1.5 | 16, 21 | A minute scheduler calls the fallback and closed-tab guests relock within two intervals. |
 | 39 | Branded magic-link email | 3 | 27, 36 | The sign-in email is styled, accessible, localized, and safe across major clients. |
+| 40 | AWS Lambda relock scheduler migration | 3 (infra) | 38 | EventBridge Scheduler invokes a Lambda every minute, with SSM-backed auth, alarms, and a measured cutover. |
 
 ## Sequencing
 
@@ -474,6 +493,8 @@ code. The owner records the decision and the conditions that would reopen it.
   It can run in parallel with Tasks 35–37 because it changes no app code.
 - Task 39 follows Task 36 and is email polish; it must not delay the
   pilot-critical set.
+- Task 40 is a post-pilot infrastructure migration. Keep QStash live until the
+  Lambda path passes the closed-tab acceptance.
 - Task 27 is complete. Tasks 35–37 finish the remaining localization and
   empty-state work without reopening the pilot-critical set.
 - Task 15 remains blocked on TTLock credentials and a test lock. Do not replace
@@ -493,4 +514,6 @@ code. The owner records the decision and the conditions that would reopen it.
 - Whether the sign-in email should include a hosted logo image. The template
   starts text-only because many clients block images; a logo needs a public
   asset and alt text.
+- Which EU AWS region hosts the Task 40 Lambda scheduler. The region is an
+  operational choice; record it with the deployment.
 - The metrics report cadence and where the weekly output is stored.
