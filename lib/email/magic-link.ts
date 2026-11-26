@@ -10,6 +10,20 @@ export type MagicLinkEmailInput = {
   locale: Locale
 }
 
+/**
+ * Resolve the request locale, falling back to English when the send runs
+ * outside a request context.
+ */
+export async function resolveMagicLinkLocale(
+  lookup: () => Promise<Locale>,
+): Promise<Locale> {
+  try {
+    return await lookup()
+  } catch {
+    return "en"
+  }
+}
+
 export async function sendMagicLinkEmail(input: MagicLinkEmailInput): Promise<void> {
   const env = getEnv()
   const dictionary = getDictionary(input.locale)
@@ -23,6 +37,7 @@ export async function sendMagicLinkEmail(input: MagicLinkEmailInput): Promise<vo
 
   if (response.error || !response.data?.id) {
     // Do not log the recipient or the sign-in URL.
+    console.error("Magic link email failed")
     throw new Error("magic_link_email_failed")
   }
 }
