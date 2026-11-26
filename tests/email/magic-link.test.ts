@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { resolveMagicLinkLocale, sendMagicLinkEmail } from "@/lib/email/magic-link"
 
-const URL = "https://example.com/api/auth/callback/resend?token=abc"
+const URL = "https://example.com/api/auth/callback/resend?callbackUrl=%2Fdashboard&token=abc&email=ana%40example.com"
 
 function stubResend(response: { body: unknown; status: number }) {
   let request: { url: string; init?: RequestInit } | undefined
@@ -51,7 +51,8 @@ describe("sendMagicLinkEmail", () => {
     expect((body.text.match(/token=abc/g) ?? []).length).toBe(1)
     expect(body.html).toContain("<!doctype html>")
     expect(body.html).toContain('lang="en"')
-    expect(body.html).toContain(URL)
+    expect(body.html).toContain(URL.replace(/&/g, "&amp;"))
+    expect(body.html).not.toContain("?callbackUrl=%2Fdashboard&token=abc")
     expect(body.text).not.toMatch(/invited|not invited/i)
   })
 
