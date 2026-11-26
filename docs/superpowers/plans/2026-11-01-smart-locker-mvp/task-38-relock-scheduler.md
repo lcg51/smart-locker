@@ -42,18 +42,18 @@ Expected: `503`/`401` without valid auth, and `200` with a JSON body such as
 
 - [ ] **Step 2: Choose and record the scheduler**
 
-Recommendation: **Upstash QStash** (already an optional dependency for rate
-limiting, supports one-minute schedules and custom headers). Acceptable
-alternative: **cron-job.org** with a custom `Authorization` header. Reject
-GitHub Actions schedules: their minimum interval is five minutes and their
-timing is unreliable.
+The pilot uses **cron-job.org**: free, one-minute intervals, and custom
+`Authorization` headers. Upstash QStash is the documented alternative/rollback
+(its 1,000-message/day free tier cannot cover 1,440/day, so it needs pay-as-you-go).
+Reject GitHub Actions schedules: their minimum interval is five minutes and
+their timing is unreliable.
 
 Record the choice and the reason in `docs/relock-scheduler.md`:
 
 ```md
 # Relock scheduler
 
-Provider: <QStash | cron-job.org>
+Provider: cron-job.org
 Schedule: every 1 minute
 Target: GET https://<host>/api/cron/relock
 Auth: Authorization: Bearer <CRON_SECRET>
@@ -64,15 +64,15 @@ Achieved interval: <measured>
 
 - [ ] **Step 3: Configure the schedule**
 
-For QStash:
+For cron-job.org:
 
-1. Create a schedule with destination `https://<host>/api/cron/relock`.
-2. Add the header `Authorization: Bearer <CRON_SECRET>`.
-3. Use a one-minute cron expression and the `Europe/Madrid` timezone.
-4. Store the secret in the scheduler's secret store, never in the URL.
+1. Create a job with the destination `https://<host>/api/cron/relock`.
+2. Schedule it every minute and set the method to `GET`.
+3. Add the custom header `Authorization: Bearer <CRON_SECRET>`.
+4. Save, run it once, and confirm `200` in the execution history.
 
-Document the equivalent steps for the chosen alternative. Keep the secret out of
-the repository, screenshots, and logs.
+Keep the QStash steps in the runbook as the documented alternative. Keep the
+secret out of the repository, screenshots, and logs.
 
 - [ ] **Step 4: Verify the scheduler from the provider side**
 

@@ -112,7 +112,7 @@ bug, not a feature request, and it is Task 16.
   command is never relocked by an older guest timer.
 - `RELOCK_SECONDS` is an env value defaulting to 30. Tests set it to 1.
 - Limitation: the client action is exact while the tab is open; the cron sweeper
-  closes abandoned tabs within about a minute. QStash or a vendor-side auto-lock
+  closes abandoned tabs within about a minute. an external scheduler or a vendor-side auto-lock
   can replace the sweeper later.
 
 ### 2. Guest-link privacy and security headers (Task 17)
@@ -398,9 +398,10 @@ code. The owner records the decision and the conditions that would reopen it.
 
 - Vercel Hobby cannot run a minute cron, so an external scheduler calls
   `GET /api/cron/relock` every minute with `Authorization: Bearer $CRON_SECRET`.
-- Choose and document one provider. Upstash QStash is the recommendation because
-  the project already integrates Upstash and it supports one-minute schedules
-  and custom headers. cron-job.org is an acceptable alternative. GitHub Actions
+- The pilot uses **cron-job.org**: it is free, supports a one-minute GET, and
+  allows a custom `Authorization` header. Upstash QStash remains the documented
+  alternative/rollback. QStash's 1,000-message/day free tier cannot cover a
+  1,440/day one-minute schedule, so it would need pay-as-you-go. GitHub Actions
   schedules are rejected: their minimum interval is five minutes and their
   timing is unreliable.
 - Record the achieved interval and a closed-tab relock measurement in
@@ -429,21 +430,21 @@ code. The owner records the decision and the conditions that would reopen it.
 
 ### 24. AWS Lambda relock scheduler migration (Task 40)
 
-- QStash remains the live pilot scheduler from Task 38. Task 40 is a post-pilot
-  migration to AWS EventBridge Scheduler → Lambda → `GET /api/cron/relock`.
+- cron-job.org remains the live pilot scheduler from Task 38. Task 40 is a
+  post-pilot migration to AWS EventBridge Scheduler → Lambda → `GET /api/cron/relock`.
 - The Lambda runs in an EU region, reads `CRON_SECRET` from SSM SecureString,
   calls the route with the bearer token, and logs only status and counts.
 - The schedule runs `rate(1 minute)` and has retry, a dead-letter queue, and a
   CloudWatch error alarm. Least-privilege IAM grants only the parameter read and
   the function invocation.
 - Deploy with the schedule disabled, invoke the Lambda manually, and enable it
-  only after a `200`. Keep the QStash schedule paused but available for rollback
+  only after a `200`. Keep the cron-job.org job paused but available for rollback
   until the closed-tab acceptance passes.
 - No application code, route, token, or database changes. No other AWS migration.
 - Acceptance: a manual invoke returns `200`, the schedule logs one successful
-  call per minute, a closed-tab guest relocks within two intervals with QStash
-  paused, and the deployment record names AWS, the region, and the measured
-  latency.
+  call per minute, a closed-tab guest relocks within two intervals with
+  cron-job.org paused, and the deployment record names AWS, the region, and the
+  measured latency.
 
 ## Task map
 
@@ -493,8 +494,8 @@ code. The owner records the decision and the conditions that would reopen it.
   It can run in parallel with Tasks 35–37 because it changes no app code.
 - Task 39 follows Task 36 and is email polish; it must not delay the
   pilot-critical set.
-- Task 40 is a post-pilot infrastructure migration. Keep QStash live until the
-  Lambda path passes the closed-tab acceptance.
+- Task 40 is a post-pilot infrastructure migration. Keep cron-job.org live until
+  the Lambda path passes the closed-tab acceptance.
 - Task 27 is complete. Tasks 35–37 finish the remaining localization and
   empty-state work without reopening the pilot-critical set.
 - Task 15 remains blocked on TTLock credentials and a test lock. Do not replace

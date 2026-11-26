@@ -135,7 +135,7 @@ provider task and does not move earlier.
 11. **The sign-in email looks broken or hides the link.** It must render in
     Gmail, Apple Mail, and Outlook with images off, keep a visible fallback
     link, and retain a plain-text alternative. Pinned in Task 39.
-12. **The scheduler migration removes the working fallback too early.** QStash
+12. **The scheduler migration removes the working fallback too early.** cron-job.org
     must stay available until the Lambda path returns `200` and the closed-tab
     acceptance passes. Pinned in Task 40.
 
@@ -167,10 +167,10 @@ Task 04, 27 -> Task 36
 Task 05, 10, 27 -> Task 37
 Task 16, 21 -> Task 38 (ops; runs in parallel with 35–37)
 Task 27, 36 -> Task 39
-Task 38 -> Task 40 (infra migration; keep QStash live until verified)
+Task 38 -> Task 40 (infra migration; keep cron-job.org live until verified)
 ```
 
-Tasks 02, 03, and 10 can run in parallel once Task 01 lands. Tasks 06 and 10 can run in parallel once Task 05 lands. Everything else is sequential because it consumes the previous task's interfaces. Tasks 22–24, 26, 28–32, 35–37, and 39 can run during the pilot; Task 25 waits for Task 15's real gateway timestamps; Task 27 is complete. Tasks 33 and 34 are decision gates and can run in parallel after Task 32. Task 38 is operations and can run alongside the remaining polish. Task 40 is a post-pilot scheduler migration; keep QStash live until the Lambda path is verified.
+Tasks 02, 03, and 10 can run in parallel once Task 01 lands. Tasks 06 and 10 can run in parallel once Task 05 lands. Everything else is sequential because it consumes the previous task's interfaces. Tasks 22–24, 26, 28–32, 35–37, and 39 can run during the pilot; Task 25 waits for Task 15's real gateway timestamps; Task 27 is complete. Tasks 33 and 34 are decision gates and can run in parallel after Task 32. Task 38 is operations and can run alongside the remaining polish. Task 40 is a post-pilot scheduler migration; keep cron-job.org live until the Lambda path is verified.
 
 ## Execution notes
 
@@ -187,5 +187,5 @@ Tasks 02, 03, and 10 can run in parallel once Task 01 lands. Tasks 06 and 10 can
 - Complete Task 38 before inviting residents: without the external minute scheduler, a guest who closes the tab never relocks on Vercel Hobby.
 - Task 35 must update the existing 404 assertion in the security E2E when it replaces Next's default page.
 - Task 39 is email polish after Task 36; verify it in real clients because unit tests cannot prove rendering.
-- Task 40 is a post-pilot infrastructure migration. Deploy the Lambda with the schedule disabled and keep the QStash schedule paused, not deleted, until the closed-tab acceptance passes.
+- Task 40 is a post-pilot infrastructure migration. Deploy the Lambda with the schedule disabled and keep the cron-job.org job paused, not deleted, until the closed-tab acceptance passes.
 - Run each task's final verification command and read its output before claiming the task complete.
