@@ -43,25 +43,40 @@ pnpm test tests/api/cron-relock.test.ts
 - The public deployment URL, including `https://` (not `localhost`).
 - `CRON_SECRET` set in the Vercel Production environment, at least 16 random
   characters. The fallback returns `503` until it is set.
-- A scheduler account. The recommended provider is **Upstash QStash**; the
-  zero-cost alternative is **cron-job.org**.
+- A free **cron-job.org** account. Upstash QStash is documented as the
+  alternative/rollback if cron-job.org is unavailable.
 
-## Recommended: Upstash QStash
+## Chosen provider: cron-job.org
 
-QStash supports one-minute schedules, forwards custom headers, retries failed
-deliveries, and keeps run logs. The project already uses Upstash for rate
-limiting.
+The pilot uses cron-job.org: it is free, supports a one-minute GET, and allows a
+custom `Authorization` header. No Upstash account is required.
 
-### Cost note
+### Create the job
 
-QStash's free tier allows 1,000 messages per day. A one-minute schedule is
-1,440 messages per day, so the schedule needs the pay-as-you-go plan. At
-$1 per 100,000 messages, the schedule costs roughly **$0.13–$0.43/month**
-depending on whether the free daily allowance still applies on pay-as-you-go.
-Confirm the current pricing before enabling it; adding a payment method can
-also move the account's other free resources, including the optional Redis rate
-limiter, to paid plans. If the pilot must stay entirely free, use cron-job.org
-instead.
+1. Sign in to cron-job.org and create a cron job.
+2. Title: `Smart Locker relock fallback`.
+3. URL: `https://<host>/api/cron/relock`.
+4. Schedule: every 1 minute.
+5. Request method: `GET`.
+6. Enable custom headers and add `Authorization: Bearer <CRON_SECRET>`.
+7. Save the job and use **Run now**; confirm `200` and a JSON body in the
+   execution history.
+8. Enable the schedule.
+9. Keep the secret in the header, never in the URL or a query string.
+10. Do not screenshot or share unredacted request headers; the execution
+    history can display them.
+11. cron-job.org disables a job after 25 consecutive failures. After fixing a
+    secret or URL error, re-enable the job manually.
+12. Confirm the current free-plan limits; the pilot needs one job at a
+    one-minute interval.
+
+## Alternative: Upstash QStash
+
+Use QStash only if cron-job.org is unavailable or the pilot needs richer retry
+logs. Its 1,000-message/day free tier cannot cover a 1,440/day one-minute
+schedule, so it needs pay-as-you-go; the cost is roughly **$0.13–$0.43/month**.
+Adding a payment method can also move the account's other free resources,
+including the optional Redis rate limiter, to paid plans.
 
 ### Create the schedule with the API
 
@@ -121,18 +136,6 @@ call above.
    message to the same destination from QStash.
 9. Never screenshot or share the unredacted header.
 
-## Alternative: cron-job.org
-
-1. Create a cron job with the destination
-   `https://<host>/api/cron/relock`.
-2. Schedule it every minute.
-3. Set the method to `GET`.
-4. Enable a custom header `Authorization: Bearer <CRON_SECRET>`.
-5. Save, run it once, and confirm `200` in the execution history.
-6. Check the provider's fair-use limits before relying on a free plan.
-7. Note that cron-job.org disables a job after 25 consecutive failures. After
-   fixing a secret or URL error, re-enable the job manually.
-
 Do not use a GitHub Actions schedule: its minimum interval is five minutes and
 its start times are unreliable.
 
@@ -179,7 +182,7 @@ filled and the closed-tab acceptance passes.
 
 | Field | Value |
 |---|---|
-| Provider | QStash / cron-job.org |
+| Provider | cron-job.org / QStash |
 | Region | EU / US / n/a |
 | Schedule ID | `relock-fallback` or provider id |
 | Schedule | every 1 minute |
