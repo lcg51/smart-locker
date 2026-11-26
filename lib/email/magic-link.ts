@@ -1,8 +1,7 @@
 import { Resend } from "resend"
 import { getEnv } from "@/lib/env"
+import { renderMagicLinkEmail } from "@/lib/email/magic-link-template"
 import type { Locale } from "@/lib/i18n/config"
-import { getDictionary } from "@/lib/i18n/dictionaries"
-import { fill } from "@/lib/i18n/format"
 
 export type MagicLinkEmailInput = {
   to: string
@@ -26,13 +25,17 @@ export async function resolveMagicLinkLocale(
 
 export async function sendMagicLinkEmail(input: MagicLinkEmailInput): Promise<void> {
   const env = getEnv()
-  const dictionary = getDictionary(input.locale)
+  const { subject, html, text } = renderMagicLinkEmail({
+    url: input.url,
+    locale: input.locale,
+  })
   const resend = new Resend(env.RESEND_API_KEY)
   const response = await resend.emails.send({
     from: env.EMAIL_FROM,
     to: input.to,
-    subject: dictionary.email.signInSubject,
-    text: fill(dictionary.email.signInBody, { url: input.url }),
+    subject,
+    html,
+    text,
   })
 
   if (response.error || !response.data?.id) {

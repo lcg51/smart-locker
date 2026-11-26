@@ -447,5 +447,10 @@ export const es = {
     signInSubject: "Inicia sesión en Smart Locker",
     signInBody:
       "Abre este enlace para iniciar sesión en Smart Locker:\n\n{url}\n\nSi no solicitaste este correo, puedes ignorarlo. El enlace caduca en 24 horas.",
+    signInHeading: "Inicia sesión en Smart Locker",
+    signInIntro: "Usa el botón de abajo para iniciar sesión. El enlace caduca en 24 horas.",
+    signInButton: "Iniciar sesión",
+    signInFallback: "Si el botón no funciona, copia y pega este enlace:",
+    signInIgnore: "Si no solicitaste este correo, puedes ignorarlo.",
   },
 } satisfies Dictionary

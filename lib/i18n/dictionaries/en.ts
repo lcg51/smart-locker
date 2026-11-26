@@ -441,6 +441,11 @@ export const en = {
     signInSubject: "Sign in to Smart Locker",
     signInBody:
       "Open this link to sign in to Smart Locker:\n\n{url}\n\nIf you didn’t request this email, you can ignore it. The link expires in 24 hours.",
+    signInHeading: "Sign in to Smart Locker",
+    signInIntro: "Use the button below to sign in. This link expires in 24 hours.",
+    signInButton: "Sign in",
+    signInFallback: "If the button doesn’t work, copy and paste this link:",
+    signInIgnore: "If you didn’t request this email, you can ignore it.",
   },
 }
 

@@ -77,7 +77,7 @@ pnpm provision --email you@example.com --gateway local-gw \
 
 Ask the resident to:
 
-1. Open the magic link sent to the invited email.
+1. Open the sign-in email on a phone. Confirm the button works, the fallback link is visible, and the card is readable in light and dark mode.
 2. Confirm and name each locker on `/onboarding`.
 3. Unlock and lock each locker once, confirming battery and online state.
 4. Create a share link and send it to a colleague or second phone.
